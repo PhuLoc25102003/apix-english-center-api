@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/${DB_NAME:apix_english_center}
     username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:default_password}
+    password: ${DB_PASSWORD:Loc0918119316@}
     driver-class-name: org.postgresql.Driver
 
   jpa:

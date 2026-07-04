@@ -1,6 +1,6 @@
 <!-- Before doing this task, read and follow the backend standard file:
 
-docs/APIX_BACKEND_STANDARD.md
+docs/APIX_BACKEND_STANDARD_EN.md
 
 Project context:
 - Spring Boot 3.5.16
@@ -27,7 +27,6 @@ Rules:
 
 Task:
 [PASTE TASK HERE] -->
-
 
 # APIX English Center Management System — Backend Engineering Standard
 
@@ -128,20 +127,20 @@ This supports young students such as kindergarten children who do not have phone
 
 Use `students.access_mode`:
 
-| Access mode | Meaning |
-|---|---|
-| `NO_ACCOUNT` | Student has no login account. The center only stores a student profile. |
+| Access mode      | Meaning                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| `NO_ACCOUNT`     | Student has no login account. The center only stores a student profile.                |
 | `PARENT_MANAGED` | Parent logs in and manages/views the student's information. Common for young children. |
-| `OWN_ACCOUNT` | Student has a personal login account. Common for teenagers. |
+| `OWN_ACCOUNT`    | Student has a personal login account. Common for teenagers.                            |
 
 Use `students.student_type`:
 
-| Student type | Meaning |
-|---|---|
-| `KINDERGARTEN` | Very young student. No direct login expected. |
-| `CHILD` | Primary school age. Usually parent-managed. |
-| `TEENAGER` | Secondary/high school age. May have own account. |
-| `ADULT` | Adult learner. Usually has own account. |
+| Student type   | Meaning                                          |
+| -------------- | ------------------------------------------------ |
+| `KINDERGARTEN` | Very young student. No direct login expected.    |
+| `CHILD`        | Primary school age. Usually parent-managed.      |
+| `TEENAGER`     | Secondary/high school age. May have own account. |
+| `ADULT`        | Adult learner. Usually has own account.          |
 
 ### 2.3 Parent relationship and pickup permission
 
@@ -251,25 +250,25 @@ Same assistant, same date/time, two active sessions.
 
 ## 3. Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Language | Java 21 |
-| Framework | Spring Boot 3.x |
-| Security | Spring Security 6 |
-| ORM | Spring Data JPA + Hibernate |
-| Database | PostgreSQL |
-| Database migration | Flyway |
-| Cache | Redis |
-| Queue | RabbitMQ |
-| Scheduler | Quartz Scheduler |
-| Mapping | MapStruct |
-| Validation | Jakarta Bean Validation |
-| API documentation | OpenAPI / Swagger |
-| Testing | JUnit 5, Mockito, Testcontainers |
-| Container | Docker, Docker Compose |
-| Monitoring | Spring Actuator, Prometheus, Grafana |
-| Logging | SLF4J, Logback, structured JSON logs |
-| File storage | MinIO for local, Cloudflare R2 or AWS S3 for production |
+| Layer              | Technology                                              |
+| ------------------ | ------------------------------------------------------- |
+| Language           | Java 21                                                 |
+| Framework          | Spring Boot 3.x                                         |
+| Security           | Spring Security 6                                       |
+| ORM                | Spring Data JPA + Hibernate                             |
+| Database           | PostgreSQL                                              |
+| Database migration | Flyway                                                  |
+| Cache              | Redis                                                   |
+| Queue              | RabbitMQ                                                |
+| Scheduler          | Quartz Scheduler                                        |
+| Mapping            | MapStruct                                               |
+| Validation         | Jakarta Bean Validation                                 |
+| API documentation  | OpenAPI / Swagger                                       |
+| Testing            | JUnit 5, Mockito, Testcontainers                        |
+| Container          | Docker, Docker Compose                                  |
+| Monitoring         | Spring Actuator, Prometheus, Grafana                    |
+| Logging            | SLF4J, Logback, structured JSON logs                    |
+| File storage       | MinIO for local, Cloudflare R2 or AWS S3 for production |
 
 ### 3.1 Initial development stack
 
@@ -425,29 +424,29 @@ Reasons:
 
 Every main table must contain:
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | `UUID` | Primary key |
-| `created_at` | `TIMESTAMPTZ` | Not null |
-| `updated_at` | `TIMESTAMPTZ` | Not null |
-| `created_by` | `UUID` | Nullable FK to `users.id` |
-| `updated_by` | `UUID` | Nullable FK to `users.id` |
-| `deleted_at` | `TIMESTAMPTZ` | Nullable soft delete marker |
-| `version` | `INTEGER` | Not null, optimistic locking |
+| Column       | Type          | Rule                         |
+| ------------ | ------------- | ---------------------------- |
+| `id`         | `UUID`        | Primary key                  |
+| `created_at` | `TIMESTAMPTZ` | Not null                     |
+| `updated_at` | `TIMESTAMPTZ` | Not null                     |
+| `created_by` | `UUID`        | Nullable FK to `users.id`    |
+| `updated_by` | `UUID`        | Nullable FK to `users.id`    |
+| `deleted_at` | `TIMESTAMPTZ` | Nullable soft delete marker  |
+| `version`    | `INTEGER`     | Not null, optimistic locking |
 
 Do not physically delete important business records. Use `deleted_at`.
 
 ### 5.3 PostgreSQL naming rules
 
-| Item | Rule | Example |
-|---|---|---|
-| Table name | plural snake_case | `student_attendance` |
-| Column name | snake_case | `created_at` |
-| Primary key | `id` | `id UUID PRIMARY KEY` |
-| Foreign key | singular table name + `_id` | `student_id` |
-| Index | `idx_table_columns` | `idx_students_status` |
-| Unique constraint | `uk_table_columns` | `uk_users_email` |
-| Check constraint | `chk_table_rule` | `chk_rooms_capacity_positive` |
+| Item              | Rule                        | Example                       |
+| ----------------- | --------------------------- | ----------------------------- |
+| Table name        | plural snake_case           | `student_attendance`          |
+| Column name       | snake_case                  | `created_at`                  |
+| Primary key       | `id`                        | `id UUID PRIMARY KEY`         |
+| Foreign key       | singular table name + `_id` | `student_id`                  |
+| Index             | `idx_table_columns`         | `idx_students_status`         |
+| Unique constraint | `uk_table_columns`          | `uk_users_email`              |
+| Check constraint  | `chk_table_rule`            | `chk_rooms_capacity_positive` |
 
 ---
 
@@ -459,21 +458,21 @@ Do not physically delete important business records. Use `deleted_at`.
 
 Stores login accounts only. A user can be linked to an employee, parent, or student profile.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `email` | VARCHAR(255) | Unique, nullable for phone-only accounts |
-| `phone` | VARCHAR(30) | Unique, nullable for email-only accounts |
-| `username` | VARCHAR(100) | Unique, nullable |
-| `password_hash` | VARCHAR(255) | Not null |
-| `full_name` | VARCHAR(255) | Not null |
-| `avatar_url` | TEXT | Nullable |
-| `status` | VARCHAR(30) | ACTIVE, INACTIVE, LOCKED, PENDING |
-| `email_verified` | BOOLEAN | Default false |
-| `phone_verified` | BOOLEAN | Default false |
-| `mfa_enabled` | BOOLEAN | Default false |
-| `last_login_at` | TIMESTAMPTZ | Nullable |
-| common columns | | Required |
+| Column           | Type         | Rule                                     |
+| ---------------- | ------------ | ---------------------------------------- |
+| `id`             | UUID         | PK                                       |
+| `email`          | VARCHAR(255) | Unique, nullable for phone-only accounts |
+| `phone`          | VARCHAR(30)  | Unique, nullable for email-only accounts |
+| `username`       | VARCHAR(100) | Unique, nullable                         |
+| `password_hash`  | VARCHAR(255) | Not null                                 |
+| `full_name`      | VARCHAR(255) | Not null                                 |
+| `avatar_url`     | TEXT         | Nullable                                 |
+| `status`         | VARCHAR(30)  | ACTIVE, INACTIVE, LOCKED, PENDING        |
+| `email_verified` | BOOLEAN      | Default false                            |
+| `phone_verified` | BOOLEAN      | Default false                            |
+| `mfa_enabled`    | BOOLEAN      | Default false                            |
+| `last_login_at`  | TIMESTAMPTZ  | Nullable                                 |
+| common columns   |              | Required                                 |
 
 Constraints:
 
@@ -486,56 +485,56 @@ CHECK (email IS NOT NULL OR phone IS NOT NULL OR username IS NOT NULL)
 
 Stores hashed refresh tokens for rotation and revocation.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `user_id` | UUID | FK users.id |
-| `token_hash` | VARCHAR(255) | Unique, not null |
-| `expires_at` | TIMESTAMPTZ | Not null |
-| `revoked_at` | TIMESTAMPTZ | Nullable |
-| `replaced_by_token_id` | UUID | Nullable FK refresh_tokens.id |
-| `device_info` | TEXT | Nullable |
-| `ip_address` | VARCHAR(100) | Nullable |
-| common columns | | Required |
+| Column                 | Type         | Rule                          |
+| ---------------------- | ------------ | ----------------------------- |
+| `id`                   | UUID         | PK                            |
+| `user_id`              | UUID         | FK users.id                   |
+| `token_hash`           | VARCHAR(255) | Unique, not null              |
+| `expires_at`           | TIMESTAMPTZ  | Not null                      |
+| `revoked_at`           | TIMESTAMPTZ  | Nullable                      |
+| `replaced_by_token_id` | UUID         | Nullable FK refresh_tokens.id |
+| `device_info`          | TEXT         | Nullable                      |
+| `ip_address`           | VARCHAR(100) | Nullable                      |
+| common columns         |              | Required                      |
 
 #### `roles`
 
 Stores dynamic roles. Do not hardcode role logic.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `code` | VARCHAR(100) | Unique, uppercase-like code |
-| `name` | VARCHAR(150) | Not null |
-| `description` | TEXT | Nullable |
-| `is_system` | BOOLEAN | Default false |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column         | Type         | Rule                        |
+| -------------- | ------------ | --------------------------- |
+| `id`           | UUID         | PK                          |
+| `code`         | VARCHAR(100) | Unique, uppercase-like code |
+| `name`         | VARCHAR(150) | Not null                    |
+| `description`  | TEXT         | Nullable                    |
+| `is_system`    | BOOLEAN      | Default false               |
+| `is_active`    | BOOLEAN      | Default true                |
+| common columns |              | Required                    |
 
 #### `permissions`
 
 Stores atomic permissions.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `code` | VARCHAR(150) | Unique, example `student:create` |
-| `module` | VARCHAR(100) | Not null |
-| `action` | VARCHAR(100) | Not null |
-| `description` | TEXT | Nullable |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column         | Type         | Rule                             |
+| -------------- | ------------ | -------------------------------- |
+| `id`           | UUID         | PK                               |
+| `code`         | VARCHAR(150) | Unique, example `student:create` |
+| `module`       | VARCHAR(100) | Not null                         |
+| `action`       | VARCHAR(100) | Not null                         |
+| `description`  | TEXT         | Nullable                         |
+| `is_active`    | BOOLEAN      | Default true                     |
+| common columns |              | Required                         |
 
 #### `role_permissions`
 
 Many-to-many table between roles and permissions.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `role_id` | UUID | FK roles.id |
+| Column          | Type | Rule              |
+| --------------- | ---- | ----------------- |
+| `id`            | UUID | PK                |
+| `role_id`       | UUID | FK roles.id       |
 | `permission_id` | UUID | FK permissions.id |
-| common columns | | Required |
+| common columns  |      | Required          |
 
 Unique:
 
@@ -547,16 +546,16 @@ UNIQUE (role_id, permission_id)
 
 Assigns roles to users. Can be scoped by campus.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `user_id` | UUID | FK users.id |
-| `role_id` | UUID | FK roles.id |
-| `campus_id` | UUID | Nullable FK campuses.id |
-| `assigned_at` | TIMESTAMPTZ | Not null |
-| `expired_at` | TIMESTAMPTZ | Nullable |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column         | Type        | Rule                    |
+| -------------- | ----------- | ----------------------- |
+| `id`           | UUID        | PK                      |
+| `user_id`      | UUID        | FK users.id             |
+| `role_id`      | UUID        | FK roles.id             |
+| `campus_id`    | UUID        | Nullable FK campuses.id |
+| `assigned_at`  | TIMESTAMPTZ | Not null                |
+| `expired_at`   | TIMESTAMPTZ | Nullable                |
+| `is_active`    | BOOLEAN     | Default true            |
+| common columns |             | Required                |
 
 Unique:
 
@@ -572,83 +571,83 @@ UNIQUE (user_id, role_id, campus_id)
 
 Stores employee profiles.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `user_id` | UUID | Unique FK users.id, normally not null |
-| `employee_code` | VARCHAR(50) | Unique, not null |
-| `date_of_birth` | DATE | Nullable |
-| `gender` | VARCHAR(20) | Nullable |
-| `address` | TEXT | Nullable |
-| `emergency_contact_name` | VARCHAR(255) | Nullable |
-| `emergency_contact_phone` | VARCHAR(30) | Nullable |
-| `hired_date` | DATE | Not null |
-| `resigned_date` | DATE | Nullable |
-| `working_status` | VARCHAR(30) | WORKING, PROBATION, SUSPENDED, RESIGNED |
-| `note` | TEXT | Nullable |
-| common columns | | Required |
+| Column                    | Type         | Rule                                    |
+| ------------------------- | ------------ | --------------------------------------- |
+| `id`                      | UUID         | PK                                      |
+| `user_id`                 | UUID         | Unique FK users.id, normally not null   |
+| `employee_code`           | VARCHAR(50)  | Unique, not null                        |
+| `date_of_birth`           | DATE         | Nullable                                |
+| `gender`                  | VARCHAR(20)  | Nullable                                |
+| `address`                 | TEXT         | Nullable                                |
+| `emergency_contact_name`  | VARCHAR(255) | Nullable                                |
+| `emergency_contact_phone` | VARCHAR(30)  | Nullable                                |
+| `hired_date`              | DATE         | Not null                                |
+| `resigned_date`           | DATE         | Nullable                                |
+| `working_status`          | VARCHAR(30)  | WORKING, PROBATION, SUSPENDED, RESIGNED |
+| `note`                    | TEXT         | Nullable                                |
+| common columns            |              | Required                                |
 
 #### `positions`
 
 Stores job positions such as Teacher, Office Staff, Teaching Assistant, Accountant, Academic Manager.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `code` | VARCHAR(100) | Unique |
-| `name` | VARCHAR(150) | Not null |
-| `description` | TEXT | Nullable |
-| `is_teaching_position` | BOOLEAN | Default false |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column                 | Type         | Rule          |
+| ---------------------- | ------------ | ------------- |
+| `id`                   | UUID         | PK            |
+| `code`                 | VARCHAR(100) | Unique        |
+| `name`                 | VARCHAR(150) | Not null      |
+| `description`          | TEXT         | Nullable      |
+| `is_teaching_position` | BOOLEAN      | Default false |
+| `is_active`            | BOOLEAN      | Default true  |
+| common columns         |              | Required      |
 
 #### `employee_positions`
 
 Stores employee-position assignments.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `employee_id` | UUID | FK employees.id |
-| `position_id` | UUID | FK positions.id |
-| `campus_id` | UUID | Nullable FK campuses.id |
-| `start_date` | DATE | Not null |
-| `end_date` | DATE | Nullable |
-| `is_primary` | BOOLEAN | Default false |
-| `status` | VARCHAR(30) | ACTIVE, INACTIVE |
-| common columns | | Required |
+| Column         | Type        | Rule                    |
+| -------------- | ----------- | ----------------------- |
+| `id`           | UUID        | PK                      |
+| `employee_id`  | UUID        | FK employees.id         |
+| `position_id`  | UUID        | FK positions.id         |
+| `campus_id`    | UUID        | Nullable FK campuses.id |
+| `start_date`   | DATE        | Not null                |
+| `end_date`     | DATE        | Nullable                |
+| `is_primary`   | BOOLEAN     | Default false           |
+| `status`       | VARCHAR(30) | ACTIVE, INACTIVE        |
+| common columns |             | Required                |
 
 #### `employee_contracts`
 
 Stores employee contracts.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `employee_id` | UUID | FK employees.id |
-| `contract_number` | VARCHAR(100) | Unique |
-| `contract_type` | VARCHAR(50) | FULL_TIME, PART_TIME, FREELANCE, PROBATION |
-| `start_date` | DATE | Not null |
-| `end_date` | DATE | Nullable |
-| `base_salary` | NUMERIC(14,2) | Default 0 |
-| `terms` | TEXT | Nullable |
-| `status` | VARCHAR(30) | DRAFT, ACTIVE, EXPIRED, TERMINATED |
-| common columns | | Required |
+| Column            | Type          | Rule                                       |
+| ----------------- | ------------- | ------------------------------------------ |
+| `id`              | UUID          | PK                                         |
+| `employee_id`     | UUID          | FK employees.id                            |
+| `contract_number` | VARCHAR(100)  | Unique                                     |
+| `contract_type`   | VARCHAR(50)   | FULL_TIME, PART_TIME, FREELANCE, PROBATION |
+| `start_date`      | DATE          | Not null                                   |
+| `end_date`        | DATE          | Nullable                                   |
+| `base_salary`     | NUMERIC(14,2) | Default 0                                  |
+| `terms`           | TEXT          | Nullable                                   |
+| `status`          | VARCHAR(30)   | DRAFT, ACTIVE, EXPIRED, TERMINATED         |
+| common columns    |               | Required                                   |
 
 #### `employee_certificates`
 
 Stores certificates and qualifications.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `employee_id` | UUID | FK employees.id |
-| `certificate_name` | VARCHAR(255) | Not null |
-| `issuer` | VARCHAR(255) | Nullable |
-| `issued_date` | DATE | Nullable |
-| `expired_date` | DATE | Nullable |
-| `file_id` | UUID | Nullable FK file_objects.id |
-| common columns | | Required |
+| Column             | Type         | Rule                        |
+| ------------------ | ------------ | --------------------------- |
+| `id`               | UUID         | PK                          |
+| `employee_id`      | UUID         | FK employees.id             |
+| `certificate_name` | VARCHAR(255) | Not null                    |
+| `issuer`           | VARCHAR(255) | Nullable                    |
+| `issued_date`      | DATE         | Nullable                    |
+| `expired_date`     | DATE         | Nullable                    |
+| `file_id`          | UUID         | Nullable FK file_objects.id |
+| common columns     |              | Required                    |
 
 ---
 
@@ -658,40 +657,40 @@ Stores certificates and qualifications.
 
 Stores parent or guardian profiles. `user_id` is nullable because the center may only store contact information first.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `user_id` | UUID | Nullable unique FK users.id |
-| `parent_code` | VARCHAR(50) | Unique, not null |
-| `full_name` | VARCHAR(255) | Not null |
-| `phone` | VARCHAR(30) | Not null |
-| `email` | VARCHAR(255) | Nullable |
-| `address` | TEXT | Nullable |
-| `job_title` | VARCHAR(255) | Nullable |
-| `note` | TEXT | Nullable |
-| common columns | | Required |
+| Column         | Type         | Rule                        |
+| -------------- | ------------ | --------------------------- |
+| `id`           | UUID         | PK                          |
+| `user_id`      | UUID         | Nullable unique FK users.id |
+| `parent_code`  | VARCHAR(50)  | Unique, not null            |
+| `full_name`    | VARCHAR(255) | Not null                    |
+| `phone`        | VARCHAR(30)  | Not null                    |
+| `email`        | VARCHAR(255) | Nullable                    |
+| `address`      | TEXT         | Nullable                    |
+| `job_title`    | VARCHAR(255) | Nullable                    |
+| `note`         | TEXT         | Nullable                    |
+| common columns |              | Required                    |
 
 #### `students`
 
 Stores student profiles. `user_id` is nullable because young students may not have login accounts.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `user_id` | UUID | Nullable unique FK users.id |
-| `student_code` | VARCHAR(50) | Unique, not null |
-| `full_name` | VARCHAR(255) | Not null |
-| `date_of_birth` | DATE | Not null |
-| `gender` | VARCHAR(20) | Nullable |
-| `school_name` | VARCHAR(255) | Nullable |
-| `grade` | VARCHAR(50) | Nullable |
-| `avatar_url` | TEXT | Nullable |
-| `medical_notes` | TEXT | Nullable |
-| `learning_notes` | TEXT | Nullable |
-| `student_type` | VARCHAR(30) | KINDERGARTEN, CHILD, TEENAGER, ADULT |
-| `access_mode` | VARCHAR(30) | NO_ACCOUNT, PARENT_MANAGED, OWN_ACCOUNT |
-| `status` | VARCHAR(30) | ACTIVE, INACTIVE, GRADUATED, PAUSED |
-| common columns | | Required |
+| Column           | Type         | Rule                                    |
+| ---------------- | ------------ | --------------------------------------- |
+| `id`             | UUID         | PK                                      |
+| `user_id`        | UUID         | Nullable unique FK users.id             |
+| `student_code`   | VARCHAR(50)  | Unique, not null                        |
+| `full_name`      | VARCHAR(255) | Not null                                |
+| `date_of_birth`  | DATE         | Not null                                |
+| `gender`         | VARCHAR(20)  | Nullable                                |
+| `school_name`    | VARCHAR(255) | Nullable                                |
+| `grade`          | VARCHAR(50)  | Nullable                                |
+| `avatar_url`     | TEXT         | Nullable                                |
+| `medical_notes`  | TEXT         | Nullable                                |
+| `learning_notes` | TEXT         | Nullable                                |
+| `student_type`   | VARCHAR(30)  | KINDERGARTEN, CHILD, TEENAGER, ADULT    |
+| `access_mode`    | VARCHAR(30)  | NO_ACCOUNT, PARENT_MANAGED, OWN_ACCOUNT |
+| `status`         | VARCHAR(30)  | ACTIVE, INACTIVE, GRADUATED, PAUSED     |
+| common columns   |              | Required                                |
 
 Constraints:
 
@@ -710,18 +709,18 @@ CHECK (
 
 Links students and parents. Supports multiple children per parent and multiple guardians per child.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `student_id` | UUID | FK students.id |
-| `parent_id` | UUID | FK parents.id |
-| `relationship` | VARCHAR(50) | FATHER, MOTHER, GUARDIAN, SIBLING, OTHER |
-| `is_primary_contact` | BOOLEAN | Default false |
-| `can_receive_notification` | BOOLEAN | Default true |
-| `can_receive_tuition` | BOOLEAN | Default true |
-| `can_pickup_student` | BOOLEAN | Default false |
-| `is_emergency_contact` | BOOLEAN | Default false |
-| common columns | | Required |
+| Column                     | Type        | Rule                                     |
+| -------------------------- | ----------- | ---------------------------------------- |
+| `id`                       | UUID        | PK                                       |
+| `student_id`               | UUID        | FK students.id                           |
+| `parent_id`                | UUID        | FK parents.id                            |
+| `relationship`             | VARCHAR(50) | FATHER, MOTHER, GUARDIAN, SIBLING, OTHER |
+| `is_primary_contact`       | BOOLEAN     | Default false                            |
+| `can_receive_notification` | BOOLEAN     | Default true                             |
+| `can_receive_tuition`      | BOOLEAN     | Default true                             |
+| `can_pickup_student`       | BOOLEAN     | Default false                            |
+| `is_emergency_contact`     | BOOLEAN     | Default false                            |
+| common columns             |             | Required                                 |
 
 Unique:
 
@@ -737,32 +736,32 @@ UNIQUE (student_id, parent_id)
 
 Stores buildings/campuses in the same residential area.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `code` | VARCHAR(50) | Unique |
-| `name` | VARCHAR(255) | Not null |
-| `address` | TEXT | Nullable |
-| `phone` | VARCHAR(30) | Nullable |
-| `description` | TEXT | Nullable |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column         | Type         | Rule         |
+| -------------- | ------------ | ------------ |
+| `id`           | UUID         | PK           |
+| `code`         | VARCHAR(50)  | Unique       |
+| `name`         | VARCHAR(255) | Not null     |
+| `address`      | TEXT         | Nullable     |
+| `phone`        | VARCHAR(30)  | Nullable     |
+| `description`  | TEXT         | Nullable     |
+| `is_active`    | BOOLEAN      | Default true |
+| common columns |              | Required     |
 
 #### `rooms`
 
 Stores classrooms.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `campus_id` | UUID | FK campuses.id |
-| `code` | VARCHAR(50) | Not null |
-| `name` | VARCHAR(255) | Not null |
-| `capacity` | INTEGER | Must be greater than 0 |
-| `room_type` | VARCHAR(50) | CLASSROOM, OFFICE, TESTING, OTHER |
-| `facilities_note` | TEXT | Nullable |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column            | Type         | Rule                              |
+| ----------------- | ------------ | --------------------------------- |
+| `id`              | UUID         | PK                                |
+| `campus_id`       | UUID         | FK campuses.id                    |
+| `code`            | VARCHAR(50)  | Not null                          |
+| `name`            | VARCHAR(255) | Not null                          |
+| `capacity`        | INTEGER      | Must be greater than 0            |
+| `room_type`       | VARCHAR(50)  | CLASSROOM, OFFICE, TESTING, OTHER |
+| `facilities_note` | TEXT         | Nullable                          |
+| `is_active`       | BOOLEAN      | Default true                      |
+| common columns    |              | Required                          |
 
 Unique:
 
@@ -774,15 +773,15 @@ UNIQUE (campus_id, code)
 
 Stores room equipment.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `room_id` | UUID | FK rooms.id |
-| `facility_name` | VARCHAR(255) | Not null |
-| `quantity` | INTEGER | Default 1 |
-| `condition_status` | VARCHAR(50) | GOOD, NEED_REPAIR, BROKEN |
-| `note` | TEXT | Nullable |
-| common columns | | Required |
+| Column             | Type         | Rule                      |
+| ------------------ | ------------ | ------------------------- |
+| `id`               | UUID         | PK                        |
+| `room_id`          | UUID         | FK rooms.id               |
+| `facility_name`    | VARCHAR(255) | Not null                  |
+| `quantity`         | INTEGER      | Default 1                 |
+| `condition_status` | VARCHAR(50)  | GOOD, NEED_REPAIR, BROKEN |
+| `note`             | TEXT         | Nullable                  |
+| common columns     |              | Required                  |
 
 ---
 
@@ -792,61 +791,61 @@ Stores room equipment.
 
 Stores course levels.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `code` | VARCHAR(50) | Unique |
-| `name` | VARCHAR(150) | Not null |
-| `order_index` | INTEGER | For display order |
-| `description` | TEXT | Nullable |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column         | Type         | Rule              |
+| -------------- | ------------ | ----------------- |
+| `id`           | UUID         | PK                |
+| `code`         | VARCHAR(50)  | Unique            |
+| `name`         | VARCHAR(150) | Not null          |
+| `order_index`  | INTEGER      | For display order |
+| `description`  | TEXT         | Nullable          |
+| `is_active`    | BOOLEAN      | Default true      |
+| common columns |              | Required          |
 
 #### `courses`
 
 Stores sellable/teachable courses.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `level_id` | UUID | FK levels.id |
-| `code` | VARCHAR(50) | Unique |
-| `name` | VARCHAR(255) | Not null |
-| `description` | TEXT | Nullable |
-| `total_lessons` | INTEGER | Must be greater than 0 |
-| `duration_minutes` | INTEGER | Default lesson duration |
-| `default_tuition_fee` | NUMERIC(14,2) | Default 0 |
-| `status` | VARCHAR(30) | DRAFT, ACTIVE, INACTIVE, ARCHIVED |
-| common columns | | Required |
+| Column                | Type          | Rule                              |
+| --------------------- | ------------- | --------------------------------- |
+| `id`                  | UUID          | PK                                |
+| `level_id`            | UUID          | FK levels.id                      |
+| `code`                | VARCHAR(50)   | Unique                            |
+| `name`                | VARCHAR(255)  | Not null                          |
+| `description`         | TEXT          | Nullable                          |
+| `total_lessons`       | INTEGER       | Must be greater than 0            |
+| `duration_minutes`    | INTEGER       | Default lesson duration           |
+| `default_tuition_fee` | NUMERIC(14,2) | Default 0                         |
+| `status`              | VARCHAR(30)   | DRAFT, ACTIVE, INACTIVE, ARCHIVED |
+| common columns        |               | Required                          |
 
 #### `curriculums`
 
 Stores curriculum versions for a course.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `course_id` | UUID | FK courses.id |
-| `name` | VARCHAR(255) | Not null |
-| `version_name` | VARCHAR(100) | Not null |
-| `description` | TEXT | Nullable |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column         | Type         | Rule          |
+| -------------- | ------------ | ------------- |
+| `id`           | UUID         | PK            |
+| `course_id`    | UUID         | FK courses.id |
+| `name`         | VARCHAR(255) | Not null      |
+| `version_name` | VARCHAR(100) | Not null      |
+| `description`  | TEXT         | Nullable      |
+| `is_active`    | BOOLEAN      | Default true  |
+| common columns |              | Required      |
 
 #### `lessons`
 
 Stores lessons inside a curriculum.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `curriculum_id` | UUID | FK curriculums.id |
-| `lesson_no` | INTEGER | Not null |
-| `title` | VARCHAR(255) | Not null |
-| `objective` | TEXT | Nullable |
-| `content_summary` | TEXT | Nullable |
-| `duration_minutes` | INTEGER | Nullable |
-| common columns | | Required |
+| Column             | Type         | Rule              |
+| ------------------ | ------------ | ----------------- |
+| `id`               | UUID         | PK                |
+| `curriculum_id`    | UUID         | FK curriculums.id |
+| `lesson_no`        | INTEGER      | Not null          |
+| `title`            | VARCHAR(255) | Not null          |
+| `objective`        | TEXT         | Nullable          |
+| `content_summary`  | TEXT         | Nullable          |
+| `duration_minutes` | INTEGER      | Nullable          |
+| common columns     |              | Required          |
 
 Unique:
 
@@ -858,29 +857,29 @@ UNIQUE (curriculum_id, lesson_no)
 
 Stores vocabulary items for lessons.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `lesson_id` | UUID | FK lessons.id |
-| `word` | VARCHAR(255) | Not null |
-| `ipa` | VARCHAR(255) | Nullable |
-| `meaning_vi` | TEXT | Nullable |
-| `example_sentence` | TEXT | Nullable |
-| common columns | | Required |
+| Column             | Type         | Rule          |
+| ------------------ | ------------ | ------------- |
+| `id`               | UUID         | PK            |
+| `lesson_id`        | UUID         | FK lessons.id |
+| `word`             | VARCHAR(255) | Not null      |
+| `ipa`              | VARCHAR(255) | Nullable      |
+| `meaning_vi`       | TEXT         | Nullable      |
+| `example_sentence` | TEXT         | Nullable      |
+| common columns     |              | Required      |
 
 #### `grammar_items`
 
 Stores grammar points for lessons.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `lesson_id` | UUID | FK lessons.id |
-| `title` | VARCHAR(255) | Not null |
-| `explanation` | TEXT | Nullable |
-| `formula` | TEXT | Nullable |
-| `examples` | TEXT | Nullable |
-| common columns | | Required |
+| Column         | Type         | Rule          |
+| -------------- | ------------ | ------------- |
+| `id`           | UUID         | PK            |
+| `lesson_id`    | UUID         | FK lessons.id |
+| `title`        | VARCHAR(255) | Not null      |
+| `explanation`  | TEXT         | Nullable      |
+| `formula`      | TEXT         | Nullable      |
+| `examples`     | TEXT         | Nullable      |
+| common columns |              | Required      |
 
 ---
 
@@ -890,100 +889,100 @@ Stores grammar points for lessons.
 
 Stores opened classes.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `course_id` | UUID | FK courses.id |
-| `campus_id` | UUID | FK campuses.id |
-| `class_code` | VARCHAR(50) | Unique |
-| `name` | VARCHAR(255) | Not null |
-| `capacity` | INTEGER | Must be greater than 0 |
-| `start_date` | DATE | Not null |
-| `expected_end_date` | DATE | Nullable |
-| `status` | VARCHAR(30) | PLANNED, ACTIVE, PAUSED, COMPLETED, CANCELLED |
-| `note` | TEXT | Nullable |
-| common columns | | Required |
+| Column              | Type         | Rule                                          |
+| ------------------- | ------------ | --------------------------------------------- |
+| `id`                | UUID         | PK                                            |
+| `course_id`         | UUID         | FK courses.id                                 |
+| `campus_id`         | UUID         | FK campuses.id                                |
+| `class_code`        | VARCHAR(50)  | Unique                                        |
+| `name`              | VARCHAR(255) | Not null                                      |
+| `capacity`          | INTEGER      | Must be greater than 0                        |
+| `start_date`        | DATE         | Not null                                      |
+| `expected_end_date` | DATE         | Nullable                                      |
+| `status`            | VARCHAR(30)  | PLANNED, ACTIVE, PAUSED, COMPLETED, CANCELLED |
+| `note`              | TEXT         | Nullable                                      |
+| common columns      |              | Required                                      |
 
 #### `class_staff`
 
 Assigns teachers and teaching assistants to classes.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `class_id` | UUID | FK classes.id |
-| `employee_id` | UUID | FK employees.id |
-| `staff_type` | VARCHAR(30) | TEACHER, TEACHING_ASSISTANT |
-| `start_date` | DATE | Not null |
-| `end_date` | DATE | Nullable |
-| `is_primary` | BOOLEAN | Default false |
-| common columns | | Required |
+| Column         | Type        | Rule                        |
+| -------------- | ----------- | --------------------------- |
+| `id`           | UUID        | PK                          |
+| `class_id`     | UUID        | FK classes.id               |
+| `employee_id`  | UUID        | FK employees.id             |
+| `staff_type`   | VARCHAR(30) | TEACHER, TEACHING_ASSISTANT |
+| `start_date`   | DATE        | Not null                    |
+| `end_date`     | DATE        | Nullable                    |
+| `is_primary`   | BOOLEAN     | Default false               |
+| common columns |             | Required                    |
 
 #### `class_enrollments`
 
 Stores student enrollment in classes.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `class_id` | UUID | FK classes.id |
-| `student_id` | UUID | FK students.id |
-| `enrollment_code` | VARCHAR(50) | Unique |
-| `enrolled_date` | DATE | Not null |
-| `start_date` | DATE | Not null |
-| `end_date` | DATE | Nullable |
-| `status` | VARCHAR(30) | TRIAL, ACTIVE, FROZEN, TRANSFERRED, COMPLETED, CANCELLED |
-| `source` | VARCHAR(50) | WALK_IN, REFERRAL, ONLINE, OTHER |
-| `note` | TEXT | Nullable |
-| common columns | | Required |
+| Column            | Type        | Rule                                                     |
+| ----------------- | ----------- | -------------------------------------------------------- |
+| `id`              | UUID        | PK                                                       |
+| `class_id`        | UUID        | FK classes.id                                            |
+| `student_id`      | UUID        | FK students.id                                           |
+| `enrollment_code` | VARCHAR(50) | Unique                                                   |
+| `enrolled_date`   | DATE        | Not null                                                 |
+| `start_date`      | DATE        | Not null                                                 |
+| `end_date`        | DATE        | Nullable                                                 |
+| `status`          | VARCHAR(30) | TRIAL, ACTIVE, FROZEN, TRANSFERRED, COMPLETED, CANCELLED |
+| `source`          | VARCHAR(50) | WALK_IN, REFERRAL, ONLINE, OTHER                         |
+| `note`            | TEXT        | Nullable                                                 |
+| common columns    |             | Required                                                 |
 
 #### `enrollment_transfers`
 
 Stores class transfer history.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `student_id` | UUID | FK students.id |
+| Column               | Type | Rule                    |
+| -------------------- | ---- | ----------------------- |
+| `id`                 | UUID | PK                      |
+| `student_id`         | UUID | FK students.id          |
 | `from_enrollment_id` | UUID | FK class_enrollments.id |
-| `to_enrollment_id` | UUID | FK class_enrollments.id |
-| `transfer_date` | DATE | Not null |
-| `reason` | TEXT | Nullable |
-| `approved_by` | UUID | FK employees.id |
-| common columns | | Required |
+| `to_enrollment_id`   | UUID | FK class_enrollments.id |
+| `transfer_date`      | DATE | Not null                |
+| `reason`             | TEXT | Nullable                |
+| `approved_by`        | UUID | FK employees.id         |
+| common columns       |      | Required                |
 
 #### `enrollment_freezes`
 
 Stores temporary freeze/pause periods.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `enrollment_id` | UUID | FK class_enrollments.id |
-| `start_date` | DATE | Not null |
-| `end_date` | DATE | Not null |
-| `reason` | TEXT | Not null |
-| `status` | VARCHAR(30) | REQUESTED, APPROVED, REJECTED, CANCELLED |
-| `approved_by` | UUID | Nullable FK employees.id |
-| `approved_at` | TIMESTAMPTZ | Nullable |
-| common columns | | Required |
+| Column          | Type        | Rule                                     |
+| --------------- | ----------- | ---------------------------------------- |
+| `id`            | UUID        | PK                                       |
+| `enrollment_id` | UUID        | FK class_enrollments.id                  |
+| `start_date`    | DATE        | Not null                                 |
+| `end_date`      | DATE        | Not null                                 |
+| `reason`        | TEXT        | Not null                                 |
+| `status`        | VARCHAR(30) | REQUESTED, APPROVED, REJECTED, CANCELLED |
+| `approved_by`   | UUID        | Nullable FK employees.id                 |
+| `approved_at`   | TIMESTAMPTZ | Nullable                                 |
+| common columns  |             | Required                                 |
 
 #### `class_schedules`
 
 Stores recurring weekly schedule definitions.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `class_id` | UUID | FK classes.id |
-| `room_id` | UUID | FK rooms.id |
-| `day_of_week` | SMALLINT | 1 to 7 |
-| `start_time` | TIME | Not null |
-| `end_time` | TIME | Not null |
-| `effective_from` | DATE | Not null |
-| `effective_to` | DATE | Nullable |
-| `status` | VARCHAR(30) | ACTIVE, INACTIVE |
-| common columns | | Required |
+| Column           | Type        | Rule             |
+| ---------------- | ----------- | ---------------- |
+| `id`             | UUID        | PK               |
+| `class_id`       | UUID        | FK classes.id    |
+| `room_id`        | UUID        | FK rooms.id      |
+| `day_of_week`    | SMALLINT    | 1 to 7           |
+| `start_time`     | TIME        | Not null         |
+| `end_time`       | TIME        | Not null         |
+| `effective_from` | DATE        | Not null         |
+| `effective_to`   | DATE        | Nullable         |
+| `status`         | VARCHAR(30) | ACTIVE, INACTIVE |
+| common columns   |             | Required         |
 
 Constraints:
 
@@ -996,37 +995,37 @@ CHECK (start_time < end_time)
 
 Stores actual generated class sessions.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `class_id` | UUID | FK classes.id |
-| `schedule_id` | UUID | Nullable FK class_schedules.id |
-| `room_id` | UUID | FK rooms.id |
-| `session_date` | DATE | Not null |
-| `start_time` | TIME | Not null |
-| `end_time` | TIME | Not null |
-| `lesson_no` | INTEGER | Nullable |
-| `status` | VARCHAR(30) | PLANNED, COMPLETED, CANCELLED, RESCHEDULED |
-| `note` | TEXT | Nullable |
-| common columns | | Required |
+| Column         | Type        | Rule                                       |
+| -------------- | ----------- | ------------------------------------------ |
+| `id`           | UUID        | PK                                         |
+| `class_id`     | UUID        | FK classes.id                              |
+| `schedule_id`  | UUID        | Nullable FK class_schedules.id             |
+| `room_id`      | UUID        | FK rooms.id                                |
+| `session_date` | DATE        | Not null                                   |
+| `start_time`   | TIME        | Not null                                   |
+| `end_time`     | TIME        | Not null                                   |
+| `lesson_no`    | INTEGER     | Nullable                                   |
+| `status`       | VARCHAR(30) | PLANNED, COMPLETED, CANCELLED, RESCHEDULED |
+| `note`         | TEXT        | Nullable                                   |
+| common columns |             | Required                                   |
 
 #### `schedule_conflicts`
 
 Stores detected conflicts.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `class_schedule_id` | UUID | Nullable FK class_schedules.id |
-| `conflict_type` | VARCHAR(50) | ROOM, TEACHER, TEACHING_ASSISTANT |
-| `related_class_id` | UUID | Nullable FK classes.id |
-| `related_employee_id` | UUID | Nullable FK employees.id |
-| `related_room_id` | UUID | Nullable FK rooms.id |
-| `message` | TEXT | Not null |
-| `status` | VARCHAR(30) | OPEN, RESOLVED, IGNORED |
-| `detected_at` | TIMESTAMPTZ | Not null |
-| `resolved_at` | TIMESTAMPTZ | Nullable |
-| common columns | | Required |
+| Column                | Type        | Rule                              |
+| --------------------- | ----------- | --------------------------------- |
+| `id`                  | UUID        | PK                                |
+| `class_schedule_id`   | UUID        | Nullable FK class_schedules.id    |
+| `conflict_type`       | VARCHAR(50) | ROOM, TEACHER, TEACHING_ASSISTANT |
+| `related_class_id`    | UUID        | Nullable FK classes.id            |
+| `related_employee_id` | UUID        | Nullable FK employees.id          |
+| `related_room_id`     | UUID        | Nullable FK rooms.id              |
+| `message`             | TEXT        | Not null                          |
+| `status`              | VARCHAR(30) | OPEN, RESOLVED, IGNORED           |
+| `detected_at`         | TIMESTAMPTZ | Not null                          |
+| `resolved_at`         | TIMESTAMPTZ | Nullable                          |
+| common columns        |             | Required                          |
 
 ---
 
@@ -1036,18 +1035,18 @@ Stores detected conflicts.
 
 Stores attendance for students per session.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `session_id` | UUID | FK class_sessions.id |
-| `student_id` | UUID | FK students.id |
-| `status` | VARCHAR(30) | PRESENT, LATE, ABSENT, EXCUSED |
-| `check_in_time` | TIME | Nullable |
-| `check_out_time` | TIME | Nullable |
-| `note` | TEXT | Nullable |
-| `marked_by` | UUID | FK employees.id |
-| `marked_at` | TIMESTAMPTZ | Not null |
-| common columns | | Required |
+| Column           | Type        | Rule                           |
+| ---------------- | ----------- | ------------------------------ |
+| `id`             | UUID        | PK                             |
+| `session_id`     | UUID        | FK class_sessions.id           |
+| `student_id`     | UUID        | FK students.id                 |
+| `status`         | VARCHAR(30) | PRESENT, LATE, ABSENT, EXCUSED |
+| `check_in_time`  | TIME        | Nullable                       |
+| `check_out_time` | TIME        | Nullable                       |
+| `note`           | TEXT        | Nullable                       |
+| `marked_by`      | UUID        | FK employees.id                |
+| `marked_at`      | TIMESTAMPTZ | Not null                       |
+| common columns   |             | Required                       |
 
 Unique:
 
@@ -1059,18 +1058,18 @@ UNIQUE (session_id, student_id)
 
 Stores teacher/assistant attendance per session.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `session_id` | UUID | FK class_sessions.id |
-| `employee_id` | UUID | FK employees.id |
-| `status` | VARCHAR(30) | PRESENT, LATE, ABSENT, EXCUSED |
-| `check_in_time` | TIME | Nullable |
-| `check_out_time` | TIME | Nullable |
-| `note` | TEXT | Nullable |
-| `marked_by` | UUID | FK employees.id |
-| `marked_at` | TIMESTAMPTZ | Not null |
-| common columns | | Required |
+| Column           | Type        | Rule                           |
+| ---------------- | ----------- | ------------------------------ |
+| `id`             | UUID        | PK                             |
+| `session_id`     | UUID        | FK class_sessions.id           |
+| `employee_id`    | UUID        | FK employees.id                |
+| `status`         | VARCHAR(30) | PRESENT, LATE, ABSENT, EXCUSED |
+| `check_in_time`  | TIME        | Nullable                       |
+| `check_out_time` | TIME        | Nullable                       |
+| `note`           | TEXT        | Nullable                       |
+| `marked_by`      | UUID        | FK employees.id                |
+| `marked_at`      | TIMESTAMPTZ | Not null                       |
+| common columns   |             | Required                       |
 
 ---
 
@@ -1080,36 +1079,36 @@ Stores teacher/assistant attendance per session.
 
 Stores homework assigned to a class.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `class_id` | UUID | FK classes.id |
-| `lesson_id` | UUID | Nullable FK lessons.id |
-| `assigned_by` | UUID | FK employees.id |
-| `title` | VARCHAR(255) | Not null |
-| `description` | TEXT | Nullable |
-| `due_at` | TIMESTAMPTZ | Nullable |
-| `status` | VARCHAR(30) | DRAFT, PUBLISHED, CLOSED |
-| common columns | | Required |
+| Column         | Type         | Rule                     |
+| -------------- | ------------ | ------------------------ |
+| `id`           | UUID         | PK                       |
+| `class_id`     | UUID         | FK classes.id            |
+| `lesson_id`    | UUID         | Nullable FK lessons.id   |
+| `assigned_by`  | UUID         | FK employees.id          |
+| `title`        | VARCHAR(255) | Not null                 |
+| `description`  | TEXT         | Nullable                 |
+| `due_at`       | TIMESTAMPTZ  | Nullable                 |
+| `status`       | VARCHAR(30)  | DRAFT, PUBLISHED, CLOSED |
+| common columns |              | Required                 |
 
 #### `homework_submissions`
 
 Stores student submissions.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `homework_id` | UUID | FK homework_assignments.id |
-| `student_id` | UUID | FK students.id |
-| `answer_text` | TEXT | Nullable |
-| `file_id` | UUID | Nullable FK file_objects.id |
-| `submitted_at` | TIMESTAMPTZ | Nullable |
-| `status` | VARCHAR(30) | NOT_SUBMITTED, SUBMITTED, LATE, GRADED |
-| `teacher_feedback` | TEXT | Nullable |
-| `score` | NUMERIC(6,2) | Nullable |
-| `graded_at` | TIMESTAMPTZ | Nullable |
-| `graded_by` | UUID | Nullable FK employees.id |
-| common columns | | Required |
+| Column             | Type         | Rule                                   |
+| ------------------ | ------------ | -------------------------------------- |
+| `id`               | UUID         | PK                                     |
+| `homework_id`      | UUID         | FK homework_assignments.id             |
+| `student_id`       | UUID         | FK students.id                         |
+| `answer_text`      | TEXT         | Nullable                               |
+| `file_id`          | UUID         | Nullable FK file_objects.id            |
+| `submitted_at`     | TIMESTAMPTZ  | Nullable                               |
+| `status`           | VARCHAR(30)  | NOT_SUBMITTED, SUBMITTED, LATE, GRADED |
+| `teacher_feedback` | TEXT         | Nullable                               |
+| `score`            | NUMERIC(6,2) | Nullable                               |
+| `graded_at`        | TIMESTAMPTZ  | Nullable                               |
+| `graded_by`        | UUID         | Nullable FK employees.id               |
+| common columns     |              | Required                               |
 
 #### `score_components`
 
@@ -1117,46 +1116,46 @@ Stores reusable score components.
 
 Examples: Listening, Speaking, Reading, Writing, Grammar, Midterm, Final.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `code` | VARCHAR(100) | Unique |
-| `name` | VARCHAR(150) | Not null |
-| `skill_type` | VARCHAR(50) | LISTENING, SPEAKING, READING, WRITING, GRAMMAR, EXAM, OTHER |
-| `default_weight` | NUMERIC(5,2) | Default 0 |
-| `is_active` | BOOLEAN | Default true |
-| common columns | | Required |
+| Column           | Type         | Rule                                                        |
+| ---------------- | ------------ | ----------------------------------------------------------- |
+| `id`             | UUID         | PK                                                          |
+| `code`           | VARCHAR(100) | Unique                                                      |
+| `name`           | VARCHAR(150) | Not null                                                    |
+| `skill_type`     | VARCHAR(50)  | LISTENING, SPEAKING, READING, WRITING, GRAMMAR, EXAM, OTHER |
+| `default_weight` | NUMERIC(5,2) | Default 0                                                   |
+| `is_active`      | BOOLEAN      | Default true                                                |
+| common columns   |              | Required                                                    |
 
 #### `assessments`
 
 Stores tests or assessments for a class.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `class_id` | UUID | FK classes.id |
-| `score_component_id` | UUID | FK score_components.id |
-| `title` | VARCHAR(255) | Not null |
-| `assessment_date` | DATE | Nullable |
-| `max_score` | NUMERIC(6,2) | Not null |
-| `weight` | NUMERIC(5,2) | Default 0 |
-| `status` | VARCHAR(30) | DRAFT, PUBLISHED, LOCKED |
-| common columns | | Required |
+| Column               | Type         | Rule                     |
+| -------------------- | ------------ | ------------------------ |
+| `id`                 | UUID         | PK                       |
+| `class_id`           | UUID         | FK classes.id            |
+| `score_component_id` | UUID         | FK score_components.id   |
+| `title`              | VARCHAR(255) | Not null                 |
+| `assessment_date`    | DATE         | Nullable                 |
+| `max_score`          | NUMERIC(6,2) | Not null                 |
+| `weight`             | NUMERIC(5,2) | Default 0                |
+| `status`             | VARCHAR(30)  | DRAFT, PUBLISHED, LOCKED |
+| common columns       |              | Required                 |
 
 #### `student_scores`
 
 Stores each student's score for an assessment.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `assessment_id` | UUID | FK assessments.id |
-| `student_id` | UUID | FK students.id |
-| `score` | NUMERIC(6,2) | Not null |
-| `comment` | TEXT | Nullable |
-| `graded_by` | UUID | FK employees.id |
-| `graded_at` | TIMESTAMPTZ | Not null |
-| common columns | | Required |
+| Column          | Type         | Rule              |
+| --------------- | ------------ | ----------------- |
+| `id`            | UUID         | PK                |
+| `assessment_id` | UUID         | FK assessments.id |
+| `student_id`    | UUID         | FK students.id    |
+| `score`         | NUMERIC(6,2) | Not null          |
+| `comment`       | TEXT         | Nullable          |
+| `graded_by`     | UUID         | FK employees.id   |
+| `graded_at`     | TIMESTAMPTZ  | Not null          |
+| common columns  |              | Required          |
 
 Unique:
 
@@ -1168,42 +1167,42 @@ UNIQUE (assessment_id, student_id)
 
 Stores weekly, monthly, and final learning reports.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `student_id` | UUID | FK students.id |
-| `class_id` | UUID | FK classes.id |
-| `report_type` | VARCHAR(30) | WEEKLY, MONTHLY, FINAL |
-| `period_start` | DATE | Not null |
-| `period_end` | DATE | Not null |
-| `listening_comment` | TEXT | Nullable |
-| `speaking_comment` | TEXT | Nullable |
-| `reading_comment` | TEXT | Nullable |
-| `writing_comment` | TEXT | Nullable |
-| `grammar_comment` | TEXT | Nullable |
-| `attitude_comment` | TEXT | Nullable |
-| `overall_comment` | TEXT | Nullable |
-| `status` | VARCHAR(30) | DRAFT, SUBMITTED, APPROVED, DELIVERED |
-| `prepared_by` | UUID | FK employees.id |
-| `approved_by` | UUID | Nullable FK employees.id |
-| `approved_at` | TIMESTAMPTZ | Nullable |
-| common columns | | Required |
+| Column              | Type        | Rule                                  |
+| ------------------- | ----------- | ------------------------------------- |
+| `id`                | UUID        | PK                                    |
+| `student_id`        | UUID        | FK students.id                        |
+| `class_id`          | UUID        | FK classes.id                         |
+| `report_type`       | VARCHAR(30) | WEEKLY, MONTHLY, FINAL                |
+| `period_start`      | DATE        | Not null                              |
+| `period_end`        | DATE        | Not null                              |
+| `listening_comment` | TEXT        | Nullable                              |
+| `speaking_comment`  | TEXT        | Nullable                              |
+| `reading_comment`   | TEXT        | Nullable                              |
+| `writing_comment`   | TEXT        | Nullable                              |
+| `grammar_comment`   | TEXT        | Nullable                              |
+| `attitude_comment`  | TEXT        | Nullable                              |
+| `overall_comment`   | TEXT        | Nullable                              |
+| `status`            | VARCHAR(30) | DRAFT, SUBMITTED, APPROVED, DELIVERED |
+| `prepared_by`       | UUID        | FK employees.id                       |
+| `approved_by`       | UUID        | Nullable FK employees.id              |
+| `approved_at`       | TIMESTAMPTZ | Nullable                              |
+| common columns      |             | Required                              |
 
 #### `report_deliveries`
 
 Stores delivery records to parents. Only Office Staff should deliver reports.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `report_id` | UUID | FK learning_reports.id |
-| `parent_id` | UUID | FK parents.id |
-| `delivered_by` | UUID | FK employees.id |
-| `channel` | VARCHAR(30) | IN_APP, EMAIL, SMS, ZALO, MANUAL |
-| `status` | VARCHAR(30) | PENDING, SENT, FAILED, READ |
-| `delivered_at` | TIMESTAMPTZ | Nullable |
-| `note` | TEXT | Nullable |
-| common columns | | Required |
+| Column         | Type        | Rule                             |
+| -------------- | ----------- | -------------------------------- |
+| `id`           | UUID        | PK                               |
+| `report_id`    | UUID        | FK learning_reports.id           |
+| `parent_id`    | UUID        | FK parents.id                    |
+| `delivered_by` | UUID        | FK employees.id                  |
+| `channel`      | VARCHAR(30) | IN_APP, EMAIL, SMS, ZALO, MANUAL |
+| `status`       | VARCHAR(30) | PENDING, SENT, FAILED, READ      |
+| `delivered_at` | TIMESTAMPTZ | Nullable                         |
+| `note`         | TEXT        | Nullable                         |
+| common columns |             | Required                         |
 
 ---
 
@@ -1213,70 +1212,70 @@ Stores delivery records to parents. Only Office Staff should deliver reports.
 
 Stores tuition invoices.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `student_id` | UUID | FK students.id |
-| `enrollment_id` | UUID | Nullable FK class_enrollments.id |
-| `invoice_no` | VARCHAR(100) | Unique |
-| `issue_date` | DATE | Not null |
-| `due_date` | DATE | Not null |
-| `subtotal_amount` | NUMERIC(14,2) | Not null |
-| `discount_amount` | NUMERIC(14,2) | Default 0 |
-| `total_amount` | NUMERIC(14,2) | Not null |
-| `paid_amount` | NUMERIC(14,2) | Default 0 |
-| `remaining_amount` | NUMERIC(14,2) | Not null |
-| `status` | VARCHAR(30) | DRAFT, UNPAID, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED, REFUNDED |
-| common columns | | Required |
+| Column             | Type          | Rule                                                              |
+| ------------------ | ------------- | ----------------------------------------------------------------- |
+| `id`               | UUID          | PK                                                                |
+| `student_id`       | UUID          | FK students.id                                                    |
+| `enrollment_id`    | UUID          | Nullable FK class_enrollments.id                                  |
+| `invoice_no`       | VARCHAR(100)  | Unique                                                            |
+| `issue_date`       | DATE          | Not null                                                          |
+| `due_date`         | DATE          | Not null                                                          |
+| `subtotal_amount`  | NUMERIC(14,2) | Not null                                                          |
+| `discount_amount`  | NUMERIC(14,2) | Default 0                                                         |
+| `total_amount`     | NUMERIC(14,2) | Not null                                                          |
+| `paid_amount`      | NUMERIC(14,2) | Default 0                                                         |
+| `remaining_amount` | NUMERIC(14,2) | Not null                                                          |
+| `status`           | VARCHAR(30)   | DRAFT, UNPAID, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED, REFUNDED |
+| common columns     |               | Required                                                          |
 
 #### `invoice_items`
 
 Stores invoice lines.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `invoice_id` | UUID | FK invoices.id |
-| `item_type` | VARCHAR(50) | TUITION, MATERIAL, TEST, OTHER |
-| `description` | TEXT | Not null |
-| `quantity` | INTEGER | Default 1 |
-| `unit_price` | NUMERIC(14,2) | Not null |
-| `amount` | NUMERIC(14,2) | Not null |
-| common columns | | Required |
+| Column         | Type          | Rule                           |
+| -------------- | ------------- | ------------------------------ |
+| `id`           | UUID          | PK                             |
+| `invoice_id`   | UUID          | FK invoices.id                 |
+| `item_type`    | VARCHAR(50)   | TUITION, MATERIAL, TEST, OTHER |
+| `description`  | TEXT          | Not null                       |
+| `quantity`     | INTEGER       | Default 1                      |
+| `unit_price`   | NUMERIC(14,2) | Not null                       |
+| `amount`       | NUMERIC(14,2) | Not null                       |
+| common columns |               | Required                       |
 
 #### `payments`
 
 Stores payments. Payments should be append-only.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `invoice_id` | UUID | FK invoices.id |
-| `payment_no` | VARCHAR(100) | Unique |
-| `amount` | NUMERIC(14,2) | Must be greater than 0 |
-| `payment_method` | VARCHAR(50) | CASH, BANK_TRANSFER, CARD, MOMO, VNPAY, OTHER |
-| `paid_at` | TIMESTAMPTZ | Not null |
-| `status` | VARCHAR(30) | PENDING, SUCCESS, FAILED, CANCELLED, REFUNDED |
-| `transaction_ref` | VARCHAR(255) | Nullable |
-| `collected_by` | UUID | FK employees.id |
-| `note` | TEXT | Nullable |
-| common columns | | Required |
+| Column            | Type          | Rule                                          |
+| ----------------- | ------------- | --------------------------------------------- |
+| `id`              | UUID          | PK                                            |
+| `invoice_id`      | UUID          | FK invoices.id                                |
+| `payment_no`      | VARCHAR(100)  | Unique                                        |
+| `amount`          | NUMERIC(14,2) | Must be greater than 0                        |
+| `payment_method`  | VARCHAR(50)   | CASH, BANK_TRANSFER, CARD, MOMO, VNPAY, OTHER |
+| `paid_at`         | TIMESTAMPTZ   | Not null                                      |
+| `status`          | VARCHAR(30)   | PENDING, SUCCESS, FAILED, CANCELLED, REFUNDED |
+| `transaction_ref` | VARCHAR(255)  | Nullable                                      |
+| `collected_by`    | UUID          | FK employees.id                               |
+| `note`            | TEXT          | Nullable                                      |
+| common columns    |               | Required                                      |
 
 #### `refunds`
 
 Stores refund records.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `payment_id` | UUID | FK payments.id |
-| `invoice_id` | UUID | FK invoices.id |
-| `amount` | NUMERIC(14,2) | Must be greater than 0 |
-| `reason` | TEXT | Not null |
-| `status` | VARCHAR(30) | REQUESTED, APPROVED, REJECTED, REFUNDED |
-| `approved_by` | UUID | Nullable FK employees.id |
-| `refunded_at` | TIMESTAMPTZ | Nullable |
-| common columns | | Required |
+| Column         | Type          | Rule                                    |
+| -------------- | ------------- | --------------------------------------- |
+| `id`           | UUID          | PK                                      |
+| `payment_id`   | UUID          | FK payments.id                          |
+| `invoice_id`   | UUID          | FK invoices.id                          |
+| `amount`       | NUMERIC(14,2) | Must be greater than 0                  |
+| `reason`       | TEXT          | Not null                                |
+| `status`       | VARCHAR(30)   | REQUESTED, APPROVED, REJECTED, REFUNDED |
+| `approved_by`  | UUID          | Nullable FK employees.id                |
+| `refunded_at`  | TIMESTAMPTZ   | Nullable                                |
+| common columns |               | Required                                |
 
 #### `discounts`, `vouchers`, `student_vouchers`
 
@@ -1309,84 +1308,84 @@ installments: installment_plan_id, installment_no, due_date, amount, paid_amount
 
 Stores salary configuration per employee.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `employee_id` | UUID | FK employees.id |
-| `hourly_rate` | NUMERIC(14,2) | Default 0 |
-| `teaching_hour_rate` | NUMERIC(14,2) | Default 0 |
-| `monthly_base_salary` | NUMERIC(14,2) | Default 0 |
-| `allowance_amount` | NUMERIC(14,2) | Default 0 |
-| `effective_from` | DATE | Not null |
-| `effective_to` | DATE | Nullable |
-| `status` | VARCHAR(30) | ACTIVE, INACTIVE |
-| common columns | | Required |
+| Column                | Type          | Rule             |
+| --------------------- | ------------- | ---------------- |
+| `id`                  | UUID          | PK               |
+| `employee_id`         | UUID          | FK employees.id  |
+| `hourly_rate`         | NUMERIC(14,2) | Default 0        |
+| `teaching_hour_rate`  | NUMERIC(14,2) | Default 0        |
+| `monthly_base_salary` | NUMERIC(14,2) | Default 0        |
+| `allowance_amount`    | NUMERIC(14,2) | Default 0        |
+| `effective_from`      | DATE          | Not null         |
+| `effective_to`        | DATE          | Nullable         |
+| `status`              | VARCHAR(30)   | ACTIVE, INACTIVE |
+| common columns        |               | Required         |
 
 #### `payroll_periods`
 
 Stores payroll calculation periods.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `period_code` | VARCHAR(50) | Unique |
-| `start_date` | DATE | Not null |
-| `end_date` | DATE | Not null |
-| `status` | VARCHAR(30) | OPEN, CALCULATED, APPROVED, PAID, CLOSED |
-| common columns | | Required |
+| Column         | Type        | Rule                                     |
+| -------------- | ----------- | ---------------------------------------- |
+| `id`           | UUID        | PK                                       |
+| `period_code`  | VARCHAR(50) | Unique                                   |
+| `start_date`   | DATE        | Not null                                 |
+| `end_date`     | DATE        | Not null                                 |
+| `status`       | VARCHAR(30) | OPEN, CALCULATED, APPROVED, PAID, CLOSED |
+| common columns |             | Required                                 |
 
 #### `teaching_hour_logs`
 
 Stores teaching hours generated from completed sessions.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `employee_id` | UUID | FK employees.id |
-| `session_id` | UUID | FK class_sessions.id |
-| `teaching_hours` | NUMERIC(6,2) | Not null |
-| `rate` | NUMERIC(14,2) | Not null |
-| `amount` | NUMERIC(14,2) | Not null |
-| `status` | VARCHAR(30) | DRAFT, APPROVED, PAID |
-| `approved_at` | TIMESTAMPTZ | Nullable |
-| `approved_by` | UUID | Nullable FK employees.id |
-| common columns | | Required |
+| Column           | Type          | Rule                     |
+| ---------------- | ------------- | ------------------------ |
+| `id`             | UUID          | PK                       |
+| `employee_id`    | UUID          | FK employees.id          |
+| `session_id`     | UUID          | FK class_sessions.id     |
+| `teaching_hours` | NUMERIC(6,2)  | Not null                 |
+| `rate`           | NUMERIC(14,2) | Not null                 |
+| `amount`         | NUMERIC(14,2) | Not null                 |
+| `status`         | VARCHAR(30)   | DRAFT, APPROVED, PAID    |
+| `approved_at`    | TIMESTAMPTZ   | Nullable                 |
+| `approved_by`    | UUID          | Nullable FK employees.id |
+| common columns   |               | Required                 |
 
 #### `payroll_items`
 
 Stores payroll result per employee per period.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `payroll_period_id` | UUID | FK payroll_periods.id |
-| `employee_id` | UUID | FK employees.id |
-| `base_salary` | NUMERIC(14,2) | Default 0 |
-| `teaching_amount` | NUMERIC(14,2) | Default 0 |
-| `bonus_amount` | NUMERIC(14,2) | Default 0 |
-| `penalty_amount` | NUMERIC(14,2) | Default 0 |
-| `total_amount` | NUMERIC(14,2) | Not null |
-| `status` | VARCHAR(30) | DRAFT, APPROVED, PAID |
-| `paid_at` | TIMESTAMPTZ | Nullable |
-| common columns | | Required |
+| Column              | Type          | Rule                  |
+| ------------------- | ------------- | --------------------- |
+| `id`                | UUID          | PK                    |
+| `payroll_period_id` | UUID          | FK payroll_periods.id |
+| `employee_id`       | UUID          | FK employees.id       |
+| `base_salary`       | NUMERIC(14,2) | Default 0             |
+| `teaching_amount`   | NUMERIC(14,2) | Default 0             |
+| `bonus_amount`      | NUMERIC(14,2) | Default 0             |
+| `penalty_amount`    | NUMERIC(14,2) | Default 0             |
+| `total_amount`      | NUMERIC(14,2) | Not null              |
+| `status`            | VARCHAR(30)   | DRAFT, APPROVED, PAID |
+| `paid_at`           | TIMESTAMPTZ   | Nullable              |
+| common columns      |               | Required              |
 
 #### `leave_requests`
 
 Stores employee leave requests.
 
-| Column | Type | Rule |
-|---|---|---|
-| `id` | UUID | PK |
-| `employee_id` | UUID | FK employees.id |
-| `leave_type` | VARCHAR(50) | SICK, PERSONAL, ANNUAL, UNPAID, OTHER |
-| `start_date` | DATE | Not null |
-| `end_date` | DATE | Not null |
-| `reason` | TEXT | Not null |
-| `status` | VARCHAR(30) | REQUESTED, APPROVED, REJECTED, CANCELLED |
-| `approved_by` | UUID | Nullable FK employees.id |
-| `approved_at` | TIMESTAMPTZ | Nullable |
-| `rejection_reason` | TEXT | Nullable |
-| common columns | | Required |
+| Column             | Type        | Rule                                     |
+| ------------------ | ----------- | ---------------------------------------- |
+| `id`               | UUID        | PK                                       |
+| `employee_id`      | UUID        | FK employees.id                          |
+| `leave_type`       | VARCHAR(50) | SICK, PERSONAL, ANNUAL, UNPAID, OTHER    |
+| `start_date`       | DATE        | Not null                                 |
+| `end_date`         | DATE        | Not null                                 |
+| `reason`           | TEXT        | Not null                                 |
+| `status`           | VARCHAR(30) | REQUESTED, APPROVED, REJECTED, CANCELLED |
+| `approved_by`      | UUID        | Nullable FK employees.id                 |
+| `approved_at`      | TIMESTAMPTZ | Nullable                                 |
+| `rejection_reason` | TEXT        | Nullable                                 |
+| common columns     |             | Required                                 |
 
 ---
 
@@ -2694,4 +2693,3 @@ A backend task is done only when:
 - List endpoints are paginated.
 - Audit log is created for sensitive changes.
 - Soft delete and optimistic locking are respected where applicable.
-
