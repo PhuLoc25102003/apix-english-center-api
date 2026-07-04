@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: apix-postgres
+    environment:
+      POSTGRES_DB: apix_english_center
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Loc0918119316@
+    ports:
+      - "5432:5432"
+    volumes:
+      - apix_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  apix_postgres_data:
