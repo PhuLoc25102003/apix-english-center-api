@@ -31,3 +31,28 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# =========================================================================
+# Sensitive & Configuration files
+# =========================================================================
+# Environment variables (Docker & application secrets)
+.env
+.env.local
+.env.*.local
+
+# Local application properties override
+src/main/resources/application-local.yaml
+src/main/resources/application-local.properties
+src/main/resources/application-prod.yaml
+src/main/resources/application-prod.properties
+
+# Keys and Certificates
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+
+# Local Data / Upload Directories
+/postgres-data/
+/uploads/

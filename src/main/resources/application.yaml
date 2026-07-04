@@ -6,9 +6,9 @@ spring:
     name: apix-english-center-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/apix_english_center
-    username: postgres
-    password: Loc0918119316@
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:apix_english_center}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:default_password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
