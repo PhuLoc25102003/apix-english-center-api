@@ -5,6 +5,9 @@ import com.apixenglish.center.common.response.PageResponse;
 import com.apixenglish.center.modules.student.dto.request.CreateStudentRequest;
 import com.apixenglish.center.modules.student.dto.request.UpdateStudentRequest;
 import com.apixenglish.center.modules.student.dto.response.StudentResponse;
+import com.apixenglish.center.modules.student.dto.request.LinkStudentParentRequest;
+import com.apixenglish.center.modules.student.dto.response.StudentParentResponse;
+import com.apixenglish.center.modules.student.service.StudentParentService;
 import com.apixenglish.center.modules.student.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,7 @@ import java.util.UUID;
 public class StudentController {
 
     private final StudentService studentService;
+    private final StudentParentService studentParentService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<StudentResponse>>> getStudents(
@@ -67,5 +71,31 @@ public class StudentController {
     public ResponseEntity<ApiResponse<Void>> deleteStudent(@PathVariable UUID id) {
         studentService.deleteStudent(id);
         return ResponseEntity.ok(ApiResponse.success("Student deleted successfully"));
+    }
+
+    @PostMapping("/{studentId}/parents/{parentId}")
+    public ResponseEntity<ApiResponse<StudentParentResponse>> linkStudentParent(
+            @PathVariable UUID studentId,
+            @PathVariable UUID parentId,
+            @Valid @RequestBody LinkStudentParentRequest request
+    ) {
+        StudentParentResponse response = studentParentService.linkStudentParent(studentId, parentId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response, "Student and Parent linked successfully"));
+    }
+
+    @GetMapping("/{studentId}/parents")
+    public ResponseEntity<ApiResponse<List<StudentParentResponse>>> getStudentParents(@PathVariable UUID studentId) {
+        List<StudentParentResponse> response = studentParentService.getStudentParents(studentId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Student parents retrieved successfully"));
+    }
+
+    @DeleteMapping("/{studentId}/parents/{parentId}")
+    public ResponseEntity<ApiResponse<Void>> unlinkStudentParent(
+            @PathVariable UUID studentId,
+            @PathVariable UUID parentId
+    ) {
+        studentParentService.unlinkStudentParent(studentId, parentId);
+        return ResponseEntity.ok(ApiResponse.success("Student and Parent unlinked successfully"));
     }
 }
