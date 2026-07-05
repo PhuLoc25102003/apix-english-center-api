@@ -20,8 +20,8 @@ public interface LevelRepository extends JpaRepository<Level, UUID> {
 
     @Query("SELECT l FROM Level l " +
            "WHERE l.deletedAt IS NULL " +
-           "AND (:search IS NULL OR " +
-           "     LOWER(l.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     LOWER(l.code) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (cast(:search as string) IS NULL OR " +
+           "     LOWER(l.name) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
+           "     LOWER(l.code) LIKE LOWER(CONCAT('%', cast(:search as string), '%')))")
     Page<Level> searchLevels(@Param("search") String search, Pageable pageable);
 }

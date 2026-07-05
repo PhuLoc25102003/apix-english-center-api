@@ -22,10 +22,10 @@ public interface ParentRepository extends JpaRepository<Parent, UUID> {
 
     @Query("SELECT p FROM Parent p " +
            "WHERE p.deletedAt IS NULL " +
-           "AND (:search IS NULL OR " +
-           "     LOWER(p.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     LOWER(p.phone) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     LOWER(p.parentCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (cast(:search as string) IS NULL OR " +
+           "     LOWER(p.fullName) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
+           "     LOWER(p.phone) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
+           "     LOWER(p.parentCode) LIKE LOWER(CONCAT('%', cast(:search as string), '%')))")
     Page<Parent> searchParents(@Param("search") String search, Pageable pageable);
 
     @Query("SELECT MAX(p.parentCode) FROM Parent p WHERE p.parentCode LIKE 'PAR%'")

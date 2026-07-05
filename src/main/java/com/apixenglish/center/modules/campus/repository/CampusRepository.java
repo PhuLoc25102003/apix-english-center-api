@@ -20,8 +20,8 @@ public interface CampusRepository extends JpaRepository<Campus, UUID> {
 
     @Query("SELECT c FROM Campus c " +
            "WHERE c.deletedAt IS NULL " +
-           "AND (:search IS NULL OR " +
-           "     LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     LOWER(c.code) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (cast(:search as string) IS NULL OR " +
+           "     LOWER(c.name) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
+           "     LOWER(c.code) LIKE LOWER(CONCAT('%', cast(:search as string), '%')))")
     Page<Campus> searchCampuses(@Param("search") String search, Pageable pageable);
 }

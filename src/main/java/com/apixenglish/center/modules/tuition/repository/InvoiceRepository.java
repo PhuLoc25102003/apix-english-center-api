@@ -21,9 +21,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 
     @Query("SELECT i FROM Invoice i " +
            "WHERE i.deletedAt IS NULL " +
-           "AND (:search IS NULL OR " +
-           "     LOWER(i.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     LOWER(i.invoiceNo) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (cast(:search as string) IS NULL OR " +
+           "     LOWER(i.title) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
+           "     LOWER(i.invoiceNo) LIKE LOWER(CONCAT('%', cast(:search as string), '%')))")
     Page<Invoice> searchInvoices(@Param("search") String search, Pageable pageable);
 
     @Query("SELECT MAX(i.invoiceNo) FROM Invoice i WHERE i.invoiceNo LIKE 'INV%'")

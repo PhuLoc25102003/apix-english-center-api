@@ -20,9 +20,9 @@ public interface ClazzRepository extends JpaRepository<Clazz, UUID> {
 
     @Query("SELECT c FROM Clazz c " +
            "WHERE c.deletedAt IS NULL " +
-           "AND (:search IS NULL OR " +
-           "     LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     LOWER(c.classCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (cast(:search as string) IS NULL OR " +
+           "     LOWER(c.name) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
+           "     LOWER(c.classCode) LIKE LOWER(CONCAT('%', cast(:search as string), '%')))")
     Page<Clazz> searchClasses(@Param("search") String search, Pageable pageable);
 
     @Query("SELECT MAX(c.classCode) FROM Clazz c WHERE c.classCode LIKE 'CLS%'")

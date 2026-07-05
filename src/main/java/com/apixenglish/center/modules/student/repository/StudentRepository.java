@@ -24,9 +24,9 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     @Query("SELECT s FROM Student s " +
            "WHERE s.deletedAt IS NULL " +
-           "AND (:search IS NULL OR " +
-           "     LOWER(s.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "     LOWER(s.studentCode) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (cast(:search as string) IS NULL OR " +
+           "     LOWER(s.fullName) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
+           "     LOWER(s.studentCode) LIKE LOWER(CONCAT('%', cast(:search as string), '%')))")
     Page<Student> searchStudents(@Param("search") String search, Pageable pageable);
 
     @Query("SELECT MAX(s.studentCode) FROM Student s WHERE s.studentCode LIKE 'STU%'")
