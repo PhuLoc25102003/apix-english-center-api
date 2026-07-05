@@ -18,6 +18,16 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     
     boolean existsByPhoneAndDeletedAtIsNull(String phone);
 
+    @Query("SELECT DISTINCT r.code FROM UserRole ur " +
+           "JOIN ur.role r " +
+           "WHERE ur.user.id = :userId " +
+           "AND ur.deletedAt IS NULL " +
+           "AND ur.isActive = true " +
+           "AND (ur.expiredAt IS NULL OR ur.expiredAt > CURRENT_TIMESTAMP) " +
+           "AND r.deletedAt IS NULL " +
+           "AND r.isActive = true")
+    List<String> findActiveRoleCodesByUserId(@Param("userId") UUID userId);
+
     @Query("SELECT DISTINCT p.code FROM UserRole ur " +
            "JOIN ur.role r " +
            "JOIN RolePermission rp ON rp.role = r " +

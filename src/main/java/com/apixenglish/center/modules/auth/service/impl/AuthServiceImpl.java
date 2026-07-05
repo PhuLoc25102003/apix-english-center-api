@@ -8,6 +8,7 @@ import com.apixenglish.center.modules.auth.service.AuthService;
 import com.apixenglish.center.modules.user.entity.User;
 import com.apixenglish.center.modules.user.entity.UserStatus;
 import com.apixenglish.center.modules.user.repository.UserRepository;
+import com.apixenglish.center.security.jwt.JwtProperties;
 import com.apixenglish.center.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +23,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final JwtProperties jwtProperties;
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -36,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
             throw new UnauthorizedException("User account is not active");
         }
 
+        List<String> roles = userRepository.findActiveRoleCodesByUserId(user.getId());
         List<String> permissions = userRepository.findActivePermissionCodesByUserId(user.getId());
 
         String accessToken = jwtService.generateAccessToken(
@@ -44,10 +47,24 @@ public class AuthServiceImpl implements AuthService {
                 permissions
         );
 
+        long expiresIn = jwtProperties.getAccessTokenExpirationMinutes() * 60;
+
+        LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .phone(user.getPhone())
+                .avatarUrl(user.getAvatarUrl())
+                .build();
+
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken("placeholder-refresh-token")
                 .tokenType("Bearer")
+                .expiresIn(expiresIn)
+                .user(userInfo)
+                .roles(roles)
+                .permissions(permissions)
                 .build();
     }
 
