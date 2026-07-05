@@ -39,10 +39,13 @@ public class StudentController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<StudentResponse>>> getStudents(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String studentType,
+            @RequestParam(required = false) String accessMode,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        PageResponse<StudentResponse> pageResponse = studentService.getStudents(search, PageRequest.of(page, size));
+        PageResponse<StudentResponse> pageResponse = studentService.getStudents(search, studentType, accessMode, status, PageRequest.of(page, size));
         return ResponseEntity.ok(ApiResponse.success(pageResponse, "Students retrieved successfully"));
     }
 

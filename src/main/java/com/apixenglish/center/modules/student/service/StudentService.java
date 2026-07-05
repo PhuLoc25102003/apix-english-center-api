@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 public interface StudentService {
-    PageResponse<StudentResponse> getStudents(String search, Pageable pageable);
+    PageResponse<StudentResponse> getStudents(String search, String studentType, String accessMode, String status, Pageable pageable);
     StudentResponse getStudentById(UUID id);
     StudentResponse createStudent(CreateStudentRequest request);
     StudentResponse updateStudent(UUID id, UpdateStudentRequest request);

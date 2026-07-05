@@ -7,6 +7,8 @@ import com.apixenglish.center.modules.student.dto.request.CreateStudentRequest;
 import com.apixenglish.center.modules.student.dto.request.UpdateStudentRequest;
 import com.apixenglish.center.modules.student.dto.response.StudentResponse;
 import com.apixenglish.center.modules.student.entity.Student;
+import com.apixenglish.center.modules.student.entity.StudentType;
+import com.apixenglish.center.modules.student.entity.StudentAccessMode;
 import com.apixenglish.center.modules.student.entity.StudentStatus;
 import com.apixenglish.center.modules.student.mapper.StudentMapper;
 import com.apixenglish.center.modules.student.repository.StudentRepository;
@@ -32,10 +34,31 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<StudentResponse> getStudents(String search, Pageable pageable) {
-        Page<Student> studentPage = studentRepository.searchStudents(search, pageable);
+    public PageResponse<StudentResponse> getStudents(
+            String search,
+            String studentTypeStr,
+            String accessModeStr,
+            String statusStr,
+            Pageable pageable
+    ) {
+        StudentType studentType = parseEnum(StudentType.class, studentTypeStr);
+        StudentAccessMode accessMode = parseEnum(StudentAccessMode.class, accessModeStr);
+        StudentStatus status = parseEnum(StudentStatus.class, statusStr);
+
+        Page<Student> studentPage = studentRepository.searchStudents(search, studentType, accessMode, status, pageable);
         Page<StudentResponse> responsePage = studentPage.map(studentMapper::toResponse);
         return PageResponse.of(responsePage);
+    }
+
+    private <E extends Enum<E>> E parseEnum(Class<E> enumClass, String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(enumClass, value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     @Override
