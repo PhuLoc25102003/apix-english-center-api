@@ -30,4 +30,5 @@ security:
   jwt:
     secret: ${JWT_SECRET:8db1fa122241cf0ea8b4e723528b9ecf8e06385a4f78326a0b9a9d701cd4df9f}
     access-token-expiration-minutes: 60
-
+    refresh-token-expiration-days: 30
+    cookie-secure: ${COOKIE_SECURE:false}

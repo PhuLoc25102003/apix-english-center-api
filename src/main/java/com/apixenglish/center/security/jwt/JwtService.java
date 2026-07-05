@@ -10,6 +10,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -28,6 +29,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(email)
+                .claim("tokenType", "access")
                 .claim("userId", userId)
                 .claim("email", email)
                 .claim("permissions", permissions)
@@ -37,10 +39,33 @@ public class JwtService {
                 .compact();
     }
 
+    public String generateRefreshToken(String userId, String email) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime()
+                + jwtProperties.getRefreshTokenExpirationDays() * 24 * 60 * 60 * 1000);
+
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(email)
+                .claim("tokenType", "refresh")
+                .claim("userId", userId)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
+                .compact();
+    }
+
     public boolean isTokenValid(String token) {
         try {
-            extractAllClaims(token);
-            return !isTokenExpired(token);
+            return "access".equals(extractTokenType(token)) && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isRefreshTokenValid(String token) {
+        try {
+            return "refresh".equals(extractTokenType(token)) && !isTokenExpired(token);
         } catch (Exception e) {
             return false;
         }
@@ -52,6 +77,10 @@ public class JwtService {
 
     public String extractUserId(String token) {
         return extractClaim(token, claims -> claims.get("userId", String.class));
+    }
+
+    private String extractTokenType(String token) {
+        return extractClaim(token, claims -> claims.get("tokenType", String.class));
     }
 
     @SuppressWarnings("unchecked")

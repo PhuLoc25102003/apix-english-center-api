@@ -12,4 +12,6 @@ import org.springframework.context.annotation.Configuration;
 public class JwtProperties {
     private String secret;
     private long accessTokenExpirationMinutes;
+    private long refreshTokenExpirationDays;
+    private boolean cookieSecure;
 }

@@ -38,6 +38,28 @@ public class AuthServiceImpl implements AuthService {
             throw new UnauthorizedException("User account is not active");
         }
 
+        return createSession(user);
+    }
+
+    @Override
+    public LoginResponse refreshToken(RefreshTokenRequest request) {
+        String refreshToken = request.getRefreshToken();
+        if (refreshToken == null || !jwtService.isRefreshTokenValid(refreshToken)) {
+            throw new UnauthorizedException("Invalid or expired refresh token");
+        }
+
+        User user = userRepository.findByEmailAndDeletedAtIsNull(jwtService.extractEmail(refreshToken))
+                .orElseThrow(() -> new UnauthorizedException("User account not found"));
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new UnauthorizedException("User account is not active");
+        }
+
+        return createSession(user);
+    }
+
+    private LoginResponse createSession(User user) {
+
         List<String> roles = userRepository.findActiveRoleCodesByUserId(user.getId());
         List<String> permissions = userRepository.findActivePermissionCodesByUserId(user.getId());
 
@@ -46,6 +68,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getEmail(),
                 permissions
         );
+        String refreshToken = jwtService.generateRefreshToken(user.getId().toString(), user.getEmail());
 
         long expiresIn = jwtProperties.getAccessTokenExpirationMinutes() * 60;
 
@@ -59,21 +82,12 @@ public class AuthServiceImpl implements AuthService {
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken("placeholder-refresh-token")
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .expiresIn(expiresIn)
                 .user(userInfo)
                 .roles(roles)
                 .permissions(permissions)
-                .build();
-    }
-
-    @Override
-    public LoginResponse refreshToken(RefreshTokenRequest request) {
-        return LoginResponse.builder()
-                .accessToken("placeholder-new-access-token")
-                .refreshToken(request.getRefreshToken())
-                .tokenType("Bearer")
                 .build();
     }
 }
