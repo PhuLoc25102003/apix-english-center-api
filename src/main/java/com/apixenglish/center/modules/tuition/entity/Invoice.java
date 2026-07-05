@@ -1,0 +1,56 @@
+package com.apixenglish.center.modules.tuition.entity;
+
+import com.apixenglish.center.common.domain.SoftDeleteEntity;
+import com.apixenglish.center.modules.student.entity.Student;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "invoices")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Invoice extends SoftDeleteEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_id", nullable = false)
+    private Student student;
+
+    @Column(name = "invoice_no", nullable = false, unique = true)
+    private String invoiceNo;
+
+    @Column(name = "title", nullable = false)
+    private String title;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "total_amount", nullable = false)
+    private BigDecimal totalAmount;
+
+    @Column(name = "paid_amount", nullable = false)
+    private BigDecimal paidAmount;
+
+    @Column(name = "remaining_amount", nullable = false)
+    private BigDecimal remainingAmount;
+
+    @Column(name = "due_date", nullable = false)
+    private LocalDate dueDate;
+
+    @Column(name = "status", nullable = false)
+    private String status; // UNPAID, PARTIALLY_PAID, PAID, CANCELLED
+}
