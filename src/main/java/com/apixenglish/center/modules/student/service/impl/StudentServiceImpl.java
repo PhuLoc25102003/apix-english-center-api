@@ -87,15 +87,15 @@ public class StudentServiceImpl implements StudentService {
                 .filter(s -> s.getDeletedAt() == null)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
 
-        validateDuplicateStudent(id, request.getFullName(), request.getDateOfBirth(), request.getUserId());
+        UUID targetUserId = request.getUserId() != null ? request.getUserId() : (student.getUser() != null ? student.getUser().getId() : null);
+        validateDuplicateStudent(id, request.getFullName(), request.getDateOfBirth(), targetUserId);
 
-        User user = null;
         if (request.getUserId() != null) {
-            user = userRepository.findById(request.getUserId())
+            User user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            student.setUser(user);
         }
 
-        student.setUser(user);
         student.setFullName(request.getFullName());
         student.setDateOfBirth(request.getDateOfBirth());
         student.setGender(request.getGender());

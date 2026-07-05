@@ -77,13 +77,12 @@ public class ParentServiceImpl implements ParentService {
                 .filter(p -> p.getDeletedAt() == null)
                 .orElseThrow(() -> new ResourceNotFoundException("Parent not found"));
 
-        User user = null;
         if (request.getUserId() != null) {
-            user = userRepository.findById(request.getUserId())
+            User user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            parent.setUser(user);
         }
 
-        parent.setUser(user);
         parent.setFullName(request.getFullName());
         parent.setPhone(request.getPhone());
         parent.setEmail(request.getEmail());
