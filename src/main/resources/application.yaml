@@ -25,3 +25,9 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: "0"
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:8db1fa122241cf0ea8b4e723528b9ecf8e06385a4f78326a0b9a9d701cd4df9f}
+    access-token-expiration-minutes: 60
+
