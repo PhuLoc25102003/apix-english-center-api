@@ -73,13 +73,12 @@ public class StudentController {
         return ResponseEntity.ok(ApiResponse.success("Student deleted successfully"));
     }
 
-    @PostMapping("/{studentId}/parents/{parentId}")
+    @PostMapping("/{studentId}/parents")
     public ResponseEntity<ApiResponse<StudentParentResponse>> linkStudentParent(
             @PathVariable UUID studentId,
-            @PathVariable UUID parentId,
             @Valid @RequestBody LinkStudentParentRequest request
     ) {
-        StudentParentResponse response = studentParentService.linkStudentParent(studentId, parentId, request);
+        StudentParentResponse response = studentParentService.linkStudentParent(studentId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Student and Parent linked successfully"));
     }

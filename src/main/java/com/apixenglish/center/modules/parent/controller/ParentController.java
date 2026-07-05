@@ -4,8 +4,10 @@ import com.apixenglish.center.common.response.ApiResponse;
 import com.apixenglish.center.common.response.PageResponse;
 import com.apixenglish.center.modules.parent.dto.request.CreateParentRequest;
 import com.apixenglish.center.modules.parent.dto.request.UpdateParentRequest;
+import com.apixenglish.center.modules.parent.dto.response.ParentChildResponse;
 import com.apixenglish.center.modules.parent.dto.response.ParentResponse;
 import com.apixenglish.center.modules.parent.service.ParentService;
+import com.apixenglish.center.modules.student.service.StudentParentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +32,7 @@ import java.util.UUID;
 public class ParentController {
 
     private final ParentService parentService;
+    private final StudentParentService studentParentService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ParentResponse>>> getParents(
@@ -67,5 +70,11 @@ public class ParentController {
     public ResponseEntity<ApiResponse<Void>> deleteParent(@PathVariable UUID id) {
         parentService.deleteParent(id);
         return ResponseEntity.ok(ApiResponse.success("Parent deleted successfully"));
+    }
+
+    @GetMapping("/{parentId}/children")
+    public ResponseEntity<ApiResponse<List<ParentChildResponse>>> getParentChildren(@PathVariable UUID parentId) {
+        List<ParentChildResponse> response = studentParentService.getParentChildren(parentId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Parent children retrieved successfully"));
     }
 }

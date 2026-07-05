@@ -2,6 +2,7 @@ package com.apixenglish.center.modules.student.service.impl;
 
 import com.apixenglish.center.common.exception.ConflictException;
 import com.apixenglish.center.common.exception.ResourceNotFoundException;
+import com.apixenglish.center.modules.parent.dto.response.ParentChildResponse;
 import com.apixenglish.center.modules.parent.entity.Parent;
 import com.apixenglish.center.modules.parent.repository.ParentRepository;
 import com.apixenglish.center.modules.student.dto.request.LinkStudentParentRequest;
@@ -32,7 +33,9 @@ public class StudentParentServiceImpl implements StudentParentService {
 
     @Override
     @Transactional
-    public StudentParentResponse linkStudentParent(UUID studentId, UUID parentId, LinkStudentParentRequest request) {
+    public StudentParentResponse linkStudentParent(UUID studentId, LinkStudentParentRequest request) {
+        UUID parentId = request.getParentId();
+
         Student student = studentRepository.findById(studentId)
                 .filter(s -> s.getDeletedAt() == null)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
@@ -41,20 +44,33 @@ public class StudentParentServiceImpl implements StudentParentService {
                 .filter(p -> p.getDeletedAt() == null)
                 .orElseThrow(() -> new ResourceNotFoundException("Parent not found"));
 
-        Optional<StudentParent> existingLink = studentParentRepository.findByStudentIdAndParentIdAndDeletedAtIsNull(studentId, parentId);
-        if (existingLink.isPresent()) {
-            throw new ConflictException("Student and Parent are already linked");
+        boolean isPrimary = Boolean.TRUE.equals(request.getIsPrimaryContact());
+
+        Optional<StudentParent> existingLinkOpt = studentParentRepository.findByStudentIdAndParentId(studentId, parentId);
+        if (existingLinkOpt.isPresent()) {
+            StudentParent existingLink = existingLinkOpt.get();
+            if (existingLink.getDeletedAt() == null) {
+                throw new ConflictException("Student and Parent are already linked");
+            }
+            
+            // If it was soft-deleted, restore and update it!
+            if (isPrimary) {
+                demotePrimaryContacts(studentId);
+            }
+            existingLink.restore();
+            existingLink.setRelationship(request.getRelationship());
+            existingLink.setIsPrimaryContact(isPrimary);
+            existingLink.setCanReceiveNotification(request.getCanReceiveNotification() != null ? request.getCanReceiveNotification() : true);
+            existingLink.setCanReceiveTuition(request.getCanReceiveTuition() != null ? request.getCanReceiveTuition() : true);
+            existingLink.setCanPickupStudent(request.getCanPickupStudent() != null ? request.getCanPickupStudent() : false);
+            existingLink.setIsEmergencyContact(request.getIsEmergencyContact() != null ? request.getIsEmergencyContact() : false);
+
+            StudentParent savedLink = studentParentRepository.save(existingLink);
+            return studentParentMapper.toResponse(savedLink);
         }
 
-        boolean isPrimary = Boolean.TRUE.equals(request.getIsPrimaryContact());
         if (isPrimary) {
-            List<StudentParent> currentLinks = studentParentRepository.findByStudentIdAndDeletedAtIsNull(studentId);
-            for (StudentParent link : currentLinks) {
-                if (Boolean.TRUE.equals(link.getIsPrimaryContact())) {
-                    link.setIsPrimaryContact(false);
-                    studentParentRepository.save(link);
-                }
-            }
+            demotePrimaryContacts(studentId);
         }
 
         StudentParent studentParent = StudentParent.builder()
@@ -72,6 +88,16 @@ public class StudentParentServiceImpl implements StudentParentService {
         return studentParentMapper.toResponse(savedLink);
     }
 
+    private void demotePrimaryContacts(UUID studentId) {
+        List<StudentParent> currentLinks = studentParentRepository.findByStudentIdAndDeletedAtIsNull(studentId);
+        for (StudentParent link : currentLinks) {
+            if (Boolean.TRUE.equals(link.getIsPrimaryContact())) {
+                link.setIsPrimaryContact(false);
+                studentParentRepository.save(link);
+            }
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<StudentParentResponse> getStudentParents(UUID studentId) {
@@ -82,6 +108,19 @@ public class StudentParentServiceImpl implements StudentParentService {
         List<StudentParent> links = studentParentRepository.findByStudentIdAndDeletedAtIsNull(studentId);
         return links.stream()
                 .map(studentParentMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ParentChildResponse> getParentChildren(UUID parentId) {
+        if (!parentRepository.existsById(parentId)) {
+            throw new ResourceNotFoundException("Parent not found");
+        }
+
+        List<StudentParent> links = studentParentRepository.findByParentIdAndDeletedAtIsNull(parentId);
+        return links.stream()
+                .map(studentParentMapper::toParentChildResponse)
                 .collect(Collectors.toList());
     }
 

@@ -6,12 +6,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LinkStudentParentRequest {
+
+    @NotNull(message = "Parent ID must not be null")
+    private UUID parentId;
 
     @NotNull(message = "Relationship must not be null")
     private StudentParentRelationship relationship;
