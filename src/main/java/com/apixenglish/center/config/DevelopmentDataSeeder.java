@@ -1,0 +1,97 @@
+package com.apixenglish.center.config;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.util.*;
+
+/** Realistic local data. Deliberately unavailable unless the dev profile is explicitly active. */
+@Component @Profile("dev") @RequiredArgsConstructor
+public class DevelopmentDataSeeder implements ApplicationRunner {
+    private final JdbcTemplate jdbc;
+    private final PasswordEncoder encoder;
+
+    @Override @Transactional
+    public void run(ApplicationArguments args) {
+        if (Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from users where email='admin@apix.local')", Boolean.class))) { seedSupplementalOperations(); return; }
+        String password = encoder.encode("password123");
+        seedUsers(password); seedRoleAssignments(); seedPositionsAndEmployees(); seedFamilies(password);
+        seedCampusAndAcademics(); seedClassesAndSchedules(); seedEnrollments(); seedOperations(); seedSupplementalOperations();
+    }
+
+    private void seedUsers(String password) {
+        addUser("admin@apix.local","Super Admin","0900000001",password);
+        addUser("manager@apix.local","Nguyen Minh Anh","0900000002",password);
+        addUser("office1@apix.local","Tran Thu Ha","0900000003",password);
+        addUser("office2@apix.local","Le Quoc Bao","0900000004",password);
+        for(int i=1;i<=4;i++) addUser("teacher"+i+"@apix.local",List.of("Pham Lan Anh","James Wilson","Nguyen Hoang Nam","Emily Carter").get(i-1),"090000001"+i,password);
+        addUser("ta1@apix.local","Vo Ngoc Mai","0900000020",password);
+        for(int i=1;i<=15;i++) addUser("parent"+i+"@apix.local","Parent "+String.format("%02d",i),String.format("091100%04d",i),password);
+        for(int i=1;i<=4;i++) addUser("student"+i+"@apix.local","Student Account "+i,String.format("092200%04d",i),password);
+    }
+    private void addUser(String email,String name,String phone,String password){jdbc.update("insert into users(email,phone,password_hash,full_name,status,email_verified,phone_verified) values(?,?,?,?, 'ACTIVE',true,true)",email,phone,password,name);}
+    private void seedRoleAssignments(){
+        role("admin@apix.local","SUPER_ADMIN");role("manager@apix.local","CENTER_MANAGER");role("office1@apix.local","OFFICE_STAFF");role("office2@apix.local","OFFICE_STAFF");
+        for(int i=1;i<=4;i++)role("teacher"+i+"@apix.local","TEACHER");role("ta1@apix.local","TEACHING_ASSISTANT");
+        for(int i=1;i<=15;i++)role("parent"+i+"@apix.local","PARENT");for(int i=1;i<=4;i++)role("student"+i+"@apix.local","STUDENT");
+        jdbc.update("insert into role_permissions(role_id,permission_id) select r.id,p.id from roles r cross join permissions p where r.code in ('SUPER_ADMIN','CENTER_MANAGER') on conflict(role_id,permission_id) do nothing");
+    }
+    private void role(String email,String role){jdbc.update("insert into user_roles(user_id,role_id) select u.id,r.id from users u,roles r where u.email=? and r.code=? on conflict(user_id,role_id) do nothing",email,role);}
+    private void seedPositionsAndEmployees(){
+        position("CENTER_MANAGER","Center Manager",false);position("OFFICE_STAFF","Office Staff",false);position("TEACHER","Teacher",true);position("TEACHING_ASSISTANT","Teaching Assistant",true);position("ACCOUNTANT","Accountant",false);
+        employee("EMP001","manager@apix.local","Nguyen Minh Anh","CENTER_MANAGER");employee("EMP002","office1@apix.local","Tran Thu Ha","OFFICE_STAFF");employee("EMP003","office2@apix.local","Le Quoc Bao","OFFICE_STAFF");
+        for(int i=1;i<=4;i++)employee("EMP00"+(i+3),"teacher"+i+"@apix.local",List.of("Pham Lan Anh","James Wilson","Nguyen Hoang Nam","Emily Carter").get(i-1),"TEACHER");
+        employee("EMP008","ta1@apix.local","Vo Ngoc Mai","TEACHING_ASSISTANT");
+    }
+    private void position(String code,String name,boolean teaching){jdbc.update("insert into positions(code,name,description,is_teaching_position,is_active) values(?,?,?, ?,true)",code,name,"Development "+name,teaching);}
+    private void employee(String code,String email,String name,String position){jdbc.update("insert into employees(user_id,employee_code,full_name,employment_status,hired_date,note) select id,?,?, 'ACTIVE',date '2024-01-08','Development seed employee' from users where email=?",code,name,email);jdbc.update("insert into employee_positions(employee_id,position_id,is_primary,effective_from) select e.id,p.id,true,date '2024-01-08' from employees e,positions p where e.employee_code=? and p.code=?",code,position);}
+    private void seedFamilies(String password){
+        for(int i=1;i<=15;i++)jdbc.update("insert into parents(user_id,parent_code,full_name,phone,email,address,job_title) select id,?,?,?,?,?,? from users where email=?",String.format("PAR%04d",i),"Parent "+String.format("%02d",i),String.format("091100%04d",i),"parent"+i+"@apix.local","District "+((i%7)+1)+", Ho Chi Minh City",i%3==0?"Engineer":"Office worker","parent"+i+"@apix.local");
+        String[] names={"Nguyen Gia Huy","Tran Bao Ngoc","Le Minh Khang","Pham Thao Vy","Vo Duc Anh","Bui Khanh Linh","Do Quang Minh","Hoang Yen Nhi","Dang Tuan Kiet","Ngo Mai Anh","Ly Hoang Long","Duong Ha My","Phan Anh Khoa","Trinh Ngoc Han","Cao Minh Tri","Vu Tuong Vi","Mai Gia Bao","Ta Phuong Anh","Chau Quoc Viet","Luong Thanh Truc"};
+        for(int i=1;i<=20;i++){String mode=i<=4?"OWN_ACCOUNT":i<=12?"PARENT_MANAGED":"NO_ACCOUNT";Object user=i<=4?id("select id from users where email=?","student"+i+"@apix.local"):null;jdbc.update("insert into students(user_id,student_code,full_name,date_of_birth,gender,school_name,grade,student_type,access_mode,status,learning_notes) values(?,?,?,?,?,?,?,?,?,'ACTIVE',?)",user,String.format("STU%04d",i),names[i-1],Date.valueOf(LocalDate.of(2010+i%6,(i%12)+1,(i%25)+1)),i%2==0?"FEMALE":"MALE","Ho Chi Minh City School "+((i%5)+1),String.valueOf(3+i%8),i<4?"CHILD":"TEENAGER",mode,"Seeded learner with realistic progress notes");
+            int parent=i<=5?1:((i-1)%15)+1;linkFamily(i,parent,i%3==0?"FATHER":i%3==1?"MOTHER":"GUARDIAN",true);if(i<=5)linkFamily(i,Math.min(parent+1,15),"MOTHER",false);}
+    }
+    private void linkFamily(int student,int parent,String relation,boolean primary){jdbc.update("insert into student_parents(student_id,parent_id,relationship,is_primary_contact,can_receive_notification,can_receive_tuition,can_pickup_student,is_emergency_contact) select s.id,p.id,?,?,true,true,?,? from students s,parents p where s.student_code=? and p.parent_code=?",relation,primary,primary,primary,String.format("STU%04d",student),String.format("PAR%04d",parent));}
+    private void seedCampusAndAcademics(){
+        jdbc.update("insert into campuses(code,name,address,phone,description,is_active) values('HCM01','APIX English Center - District 3','120 Vo Van Tan, District 3, Ho Chi Minh City','02839300000','Primary development campus',true)");
+        int[] caps={12,16,18,20,25};for(int i=1;i<=5;i++)jdbc.update("insert into rooms(campus_id,code,name,capacity,room_type,facilities_note,is_active) select id,?,?,?,?,?,true from campuses where code='HCM01'",String.format("R%02d",i),"Classroom "+i,caps[i-1],i==5?"ACTIVITY":"STANDARD","TV, whiteboard, air conditioning");
+        String[] levels={"STARTER","MOVERS","FLYERS","KET","PET"};for(int i=0;i<5;i++){jdbc.update("insert into levels(code,name,order_index,description,is_active) values(?,?,?,?,true)",levels[i],title(levels[i]),i+1,title(levels[i])+" Cambridge pathway");jdbc.update("insert into courses(level_id,code,name,description,total_lessons,duration_minutes,default_monthly_tuition_fee,status) select id,?,?,?,?,?,?,'ACTIVE' from levels where code=?",levels[i]+"-2026",title(levels[i])+" English 2026","Practical English course",48,90,BigDecimalValue(1800000+i*200000),levels[i]);jdbc.update("insert into curriculums(course_id,name,version_name,description,is_active) select id,?,?,?,true from courses where code=?",title(levels[i])+" Core Curriculum","2026.1","Four-term learning roadmap",levels[i]+"-2026");jdbc.update("insert into lessons(curriculum_id,lesson_no,title,content,duration_minutes) select id,n,'Lesson '||n,'Vocabulary, grammar, speaking and project practice',90 from curriculums cross join generate_series(1,8) n where version_name='2026.1' and course_id=(select id from courses where code=?)",levels[i]+"-2026");}
+    }
+    private void seedClassesAndSchedules(){
+        String[] course={"STARTER-2026","MOVERS-2026","FLYERS-2026","KET-2026","PET-2026","MOVERS-2026","FLYERS-2026","KET-2026"};String[] status={"ACTIVE","ACTIVE","ACTIVE","ACTIVE","ACTIVE","ACTIVE","PLANNED","COMPLETED"};
+        for(int i=1;i<=8;i++){jdbc.update("insert into classes(course_id,campus_id,class_code,name,capacity,start_date,expected_end_date,status,note) select c.id,ca.id,?,?,?,?,?,?,? from courses c,campuses ca where c.code=? and ca.code='HCM01'",String.format("CLS%03d",i),"APIX Class "+i,16,Date.valueOf(LocalDate.of(2026,1,5).plusWeeks(i)),Date.valueOf(LocalDate.of(2026,12,20)),status[i-1],"Development seed class",course[i-1]);String employee="EMP00"+(4+(i-1)%4);jdbc.update("insert into class_staff(class_id,employee_id,staff_role,start_date,is_primary) select c.id,e.id,'TEACHER',c.start_date,true from classes c,employees e where c.class_code=? and e.employee_code=?",String.format("CLS%03d",i),employee);if(i%2==0)jdbc.update("insert into class_staff(class_id,employee_id,staff_role,start_date,is_primary) select c.id,e.id,'TEACHING_ASSISTANT',c.start_date,false from classes c,employees e where c.class_code=? and e.employee_code='EMP008'",String.format("CLS%03d",i));seedPattern(i);}
+    }
+    private void seedPattern(int classNo){int room=(classNo-1)%5+1;String code=String.format("CLS%03d",classNo);if(classNo==5||classNo==6){String pattern=classNo==5?"SAT_SUN_MORNING":"SAT_SUN_AFTERNOON";String start=classNo==5?"09:00":"15:00",end=classNo==5?"11:00":"17:00";schedule(code,room,6,start,end,pattern);schedule(code,room,7,start,end,pattern);}else{boolean mwf=classNo%2==1;boolean slot1=classNo<=2;int[] days=mwf?new int[]{1,3,5}:new int[]{2,4,6};String start=slot1?"18:00":"19:30",end=slot1?"19:30":"21:00";String pattern=(mwf?"MON_WED_FRI":"TUE_THU_SAT")+(slot1?"_SLOT_1":"_SLOT_2");for(int d:days)schedule(code,room,d,start,end,pattern);}}
+    private void schedule(String clazz,int room,int day,String start,String end,String pattern){jdbc.update("insert into class_schedules(class_id,room_id,day_of_week,start_time,end_time,effective_from,effective_to,status,pattern_code) select c.id,r.id,?,?::time,?::time,c.start_date,c.expected_end_date,'ACTIVE',? from classes c join rooms r on r.code=? where c.class_code=?",day,start,end,pattern,String.format("R%02d",room),clazz);}
+    private void seedEnrollments(){int code=1;for(int c=1;c<=6;c++)for(int j=0;j<4;j++)enrollment(code++,((c-1)*3+j)%20+1,c,"ACTIVE",source(code));String[] extra={"TRIAL","FROZEN","TRANSFERRED","COMPLETED","CANCELLED","TRIAL"};for(int i=0;i<6;i++)enrollment(code++,15+i,(i%2)+7,extra[i],source(code));}
+    private void enrollment(int n,int student,int clazz,String status,String source){jdbc.update("insert into class_enrollments(class_id,student_id,enrollment_code,enrolled_date,start_date,end_date,status,source,note,cancellation_reason) select c.id,s.id,?,date '2026-01-05'+?::int,date '2026-01-05'+?::int,case when ? in ('COMPLETED','CANCELLED','TRANSFERRED') then date '2026-05-30' end,?,?,?,case when ?='CANCELLED' then 'Family schedule changed' end from classes c,students s where c.class_code=? and s.student_code=?",String.format("ENR%06d",n),n,n,status,status,source,"Realistic frontend test enrollment",status,String.format("CLS%03d",clazz),String.format("STU%04d",student));}
+    private void seedOperations(){
+        jdbc.update("insert into allowance_types(code,name,allowance_category,calculation_type,default_amount,is_taxable,is_active,description) values('RESPONSIBILITY','Responsibility allowance','RESPONSIBILITY','FIXED_AMOUNT',500000,true,true,'Monthly responsibility allowance'),('CLASS_LOAD','Class allowance','CLASS','PER_CLASS',200000,true,true,'Allowance per class') on conflict(code) do nothing");
+        jdbc.update("insert into payroll_periods(period_code,start_date,end_date,status) values('2026-06',date '2026-06-01',date '2026-06-30','OPEN') on conflict(period_code) do nothing");
+        jdbc.update("insert into leave_requests(employee_id,leave_type,start_date,end_date,total_leave_days,reason,status) select id,'PERSONAL',date '2026-08-10',date '2026-08-11',2,'Family appointment','REQUESTED' from employees where employee_code='EMP004'");
+        jdbc.update("insert into weekly_class_updates(class_id,week_start_date,week_end_date,homework_text,status,prepared_by) select c.id,date '2026-06-29',date '2026-07-05','Review Unit 4 vocabulary and read pages 22-24.','SUBMITTED',e.id from classes c,employees e where c.class_code='CLS001' and e.employee_code='EMP004'");
+        jdbc.update("insert into weekly_update_sessions(weekly_update_id,session_date,title,content,display_order) select id,date '2026-06-29','Unit 4 vocabulary','Students practiced places in town and direction phrases.',0 from weekly_class_updates where class_id=(select id from classes where class_code='CLS001') and week_start_date=date '2026-06-29'");
+        jdbc.update("insert into score_items(class_id,title,max_score,score_date,note,status,created_by_employee) select c.id,'Unit 3 Progress Check',10,date '2026-06-26','Vocabulary and speaking check','PUBLISHED',e.id from classes c,employees e where c.class_code='CLS001' and e.employee_code='EMP004'");
+        jdbc.update("insert into score_records(score_item_id,student_id,score,comment,graded_by) select si.id,s.id,7+(row_number() over(order by s.student_code)%4),'Good progress',e.id from score_items si join classes c on c.id=si.class_id join class_enrollments ce on ce.class_id=c.id and ce.status='ACTIVE' join students s on s.id=ce.student_id,employees e where c.class_code='CLS001' and e.employee_code='EMP004'");
+        jdbc.update("insert into notifications(title,body,target_type,target_user_id,channel,status,metadata) select 'Welcome to APIX','Development data is ready for frontend testing.','USER',id,'IN_APP','PENDING','{\"type\":\"DEV_SEED_READY\"}'::jsonb from users where email in ('manager@apix.local','office1@apix.local')");
+        jdbc.update("insert into audit_logs(actor_user_id,action,module,entity_type,entity_id,after_data,created_at) select id,'DEV_DATA_SEEDED','system','DevelopmentSeed',null,jsonb_build_object('students',20,'enrollments',30),now() from users where email='admin@apix.local'");
+    }
+    private void seedSupplementalOperations(){
+        if(Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from audit_logs where action='DEV_OPERATIONAL_DATA_SEEDED')",Boolean.class)))return;
+        jdbc.update("insert into class_sessions(class_id,session_date,start_time,end_time,lesson_no,status,note) select id,date '2026-07-06',time '18:00',time '19:30',20,'COMPLETED','Seed attendance session' from classes where class_code='CLS001'");
+        jdbc.update("insert into student_attendance(session_id,student_id,status,note,marked_by,marked_at,source,excuse_status,parent_notified_at,locked_by_office) select cs.id,s.id,case when row_number() over(order by s.student_code)=1 then 'ABSENT' else 'PRESENT' end,'Development attendance',u.id,now(),'OFFICE_STAFF',case when row_number() over(order by s.student_code)=1 then 'APPROVED' end,case when row_number() over(order by s.student_code)=1 then now() end,true from class_sessions cs join classes c on c.id=cs.class_id join class_enrollments ce on ce.class_id=c.id and ce.status='ACTIVE' join students s on s.id=ce.student_id,users u where c.class_code='CLS001' and cs.session_date=date '2026-07-06' and u.email='office1@apix.local' on conflict(session_id,student_id) do nothing");
+        jdbc.update("insert into student_learning_reports(student_id,class_id,report_type,period_start,period_end,learning_summary,attitude_summary,improvement_notes,recommendation,internal_note,status,prepared_by,approved_by,approved_at,delivered_by,delivered_at) select ce.student_id,c.id,'PERIODIC',date '2026-05-01',date '2026-06-30','Steady improvement in vocabulary, sentence building, and classroom communication.','Participates actively and collaborates well.','Continue practicing pronunciation and reading fluency.','Read aloud for ten minutes each day.','Internal teacher follow-up next month.','DELIVERED',t.id,o.id,now(),o.id,now() from classes c join class_enrollments ce on ce.class_id=c.id and ce.status='ACTIVE',employees t,employees o where c.class_code='CLS001' and t.employee_code='EMP004' and o.employee_code='EMP002' order by ce.enrollment_code limit 1");
+        jdbc.update("insert into invoices(student_id,class_id,enrollment_id,invoice_no,title,description,billing_start_month,billing_end_month,number_of_months,monthly_fee,subtotal_amount,discount_type,discount_value,discount_amount,total_amount,paid_amount,remaining_amount,due_date,status) select ce.student_id,ce.class_id,ce.id,'INVDEV001','July tuition and materials','Development invoice',date '2026-07-01',date '2026-07-01',1,1800000,1950000,'NONE',0,0,1950000,1000000,950000,date '2026-07-05','OVERDUE' from class_enrollments ce join classes c on c.id=ce.class_id where c.class_code='CLS001' and ce.status='ACTIVE' order by ce.enrollment_code limit 1 on conflict(invoice_no) do nothing");
+        jdbc.update("insert into invoice_items(invoice_id,fee_type,description,quantity,unit_price,amount) select id,'MONTHLY_TUITION','July monthly tuition',1,1800000,1800000 from invoices where invoice_no='INVDEV001' union all select id,'BOOK','Workbook fee',1,150000,150000 from invoices where invoice_no='INVDEV001'");
+        jdbc.update("insert into invoice_payments(invoice_id,payment_no,amount,payment_date,payment_method,note) select id,'PAYDEV001',1000000,now(),'BANK_TRANSFER','Development partial payment' from invoices where invoice_no='INVDEV001' on conflict(payment_no) do nothing");
+        jdbc.update("insert into audit_logs(actor_user_id,action,module,entity_type,after_data,created_at) select id,'DEV_OPERATIONAL_DATA_SEEDED','system','DevelopmentSeed',jsonb_build_object('attendance',true,'report',true,'invoice',true),now() from users where email='admin@apix.local'");
+    }
+    private UUID id(String sql,Object...args){return jdbc.queryForObject(sql,UUID.class,args);}private String title(String v){return v.substring(0,1)+v.substring(1).toLowerCase();}private String source(int n){return new String[]{"WALK_IN","REFERRAL","ONLINE","OTHER"}[n%4];}private java.math.BigDecimal BigDecimalValue(long v){return java.math.BigDecimal.valueOf(v);}
+}

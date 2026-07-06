@@ -54,4 +54,7 @@ public class ClassEnrollment extends SoftDeleteEntity {
 
     @Column(name = "note")
     private String note;
+
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
 }

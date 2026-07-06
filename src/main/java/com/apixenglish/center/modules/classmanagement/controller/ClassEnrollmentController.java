@@ -1,59 +1,16 @@
 package com.apixenglish.center.modules.classmanagement.controller;
-
-import com.apixenglish.center.common.response.ApiResponse;
-import com.apixenglish.center.modules.classmanagement.dto.request.EnrollStudentRequest;
-import com.apixenglish.center.modules.classmanagement.dto.response.EnrollmentResponse;
-import com.apixenglish.center.modules.classmanagement.service.ClassEnrollmentService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.UUID;
-
-@RestController
-@RequestMapping("/api/v1/enrollments")
-@RequiredArgsConstructor
-public class ClassEnrollmentController {
-
-    private final ClassEnrollmentService classEnrollmentService;
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<EnrollmentResponse>> enrollStudent(@Valid @RequestBody EnrollStudentRequest request) {
-        EnrollmentResponse response = classEnrollmentService.enrollStudent(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Student enrolled successfully"));
-    }
-
-    @GetMapping("/student/{studentId}")
-    public ResponseEntity<ApiResponse<List<EnrollmentResponse>>> getEnrollmentsByStudent(@PathVariable UUID studentId) {
-        List<EnrollmentResponse> response = classEnrollmentService.getEnrollmentsByStudent(studentId);
-        return ResponseEntity.ok(ApiResponse.success(response, "Enrollments retrieved successfully"));
-    }
-
-    @GetMapping("/class/{classId}")
-    public ResponseEntity<ApiResponse<List<EnrollmentResponse>>> getEnrollmentsByClass(@PathVariable UUID classId) {
-        List<EnrollmentResponse> response = classEnrollmentService.getEnrollmentsByClass(classId);
-        return ResponseEntity.ok(ApiResponse.success(response, "Enrollments retrieved successfully"));
-    }
-
-    @PutMapping("/{id}/cancel")
-    public ResponseEntity<ApiResponse<EnrollmentResponse>> cancelEnrollment(@PathVariable UUID id) {
-        EnrollmentResponse response = classEnrollmentService.cancelEnrollment(id);
-        return ResponseEntity.ok(ApiResponse.success(response, "Enrollment cancelled successfully"));
-    }
-
-    @PutMapping("/{id}/complete")
-    public ResponseEntity<ApiResponse<EnrollmentResponse>> completeEnrollment(@PathVariable UUID id) {
-        EnrollmentResponse response = classEnrollmentService.completeEnrollment(id);
-        return ResponseEntity.ok(ApiResponse.success(response, "Enrollment completed successfully"));
-    }
+import com.apixenglish.center.common.response.*;import com.apixenglish.center.modules.classmanagement.dto.request.*;import com.apixenglish.center.modules.classmanagement.dto.response.*;import com.apixenglish.center.modules.classmanagement.service.ClassEnrollmentService;import jakarta.validation.Valid;import lombok.RequiredArgsConstructor;import org.springframework.data.domain.*;import org.springframework.http.*;import org.springframework.security.access.prepost.PreAuthorize;import org.springframework.web.bind.annotation.*;import java.time.LocalDate;import java.util.*;
+@RestController @RequestMapping("/api/v1/enrollments") @RequiredArgsConstructor public class ClassEnrollmentController{
+ private final ClassEnrollmentService service;
+ @GetMapping @PreAuthorize("hasAuthority('enrollment:read')")public ApiResponse<List<EnrollmentResponse>> list(@RequestParam(required=false)String search,@RequestParam(required=false)String status,@RequestParam(required=false)UUID classId,@RequestParam(required=false)UUID studentId,@RequestParam(required=false)UUID campusId,@RequestParam(required=false)String source,@RequestParam(required=false)LocalDate enrolledFrom,@RequestParam(required=false)LocalDate enrolledTo,@RequestParam(defaultValue="0")int page,@RequestParam(defaultValue="20")int size,@RequestParam(defaultValue="enrolledDate,desc")String sort){return ApiResponse.success(service.list(search,status,classId,studentId,campusId,source,enrolledFrom,enrolledTo,pageable(page,size,sort)),"Enrollments retrieved successfully");}
+ @GetMapping("/{id}")@PreAuthorize("hasAuthority('enrollment:read')")public ApiResponse<EnrollmentDetailResponse> detail(@PathVariable UUID id){return ApiResponse.success(service.getDetail(id));}
+ @PostMapping @ResponseStatus(HttpStatus.CREATED)@PreAuthorize("hasAuthority('enrollment:create')")public ApiResponse<EnrollmentResponse> create(@Valid @RequestBody EnrollStudentRequest r){return ApiResponse.success(service.enrollStudent(r),"Student enrolled successfully");}
+ @PutMapping("/{id}")@PreAuthorize("hasAuthority('enrollment:update')")public ApiResponse<EnrollmentResponse> update(@PathVariable UUID id,@Valid @RequestBody UpdateEnrollmentRequest r){return ApiResponse.success(service.update(id,r));}
+ @PatchMapping("/{id}/cancel")@PreAuthorize("hasAuthority('enrollment:cancel')")public ApiResponse<EnrollmentResponse> cancel(@PathVariable UUID id,@Valid @RequestBody CancelEnrollmentRequest r){return ApiResponse.success(service.cancel(id,r));}
+ @PostMapping("/{id}/transfer")@PreAuthorize("hasAuthority('enrollment:transfer')")public ApiResponse<EnrollmentResponse> transfer(@PathVariable UUID id,@Valid @RequestBody TransferEnrollmentRequest r){return ApiResponse.success(service.transfer(id,r));}
+ @PostMapping("/{id}/freeze")@PreAuthorize("hasAuthority('enrollment:freeze')")public ApiResponse<EnrollmentResponse> freeze(@PathVariable UUID id,@Valid @RequestBody FreezeEnrollmentRequest r){return ApiResponse.success(service.freeze(id,r));}
+ @PatchMapping("/{id}/complete")@PreAuthorize("hasAuthority('enrollment:complete')")public ApiResponse<EnrollmentResponse> complete(@PathVariable UUID id,@Valid @RequestBody CompleteEnrollmentRequest r){return ApiResponse.success(service.complete(id,r));}
+ @GetMapping("/student/{id}")@PreAuthorize("hasAuthority('enrollment:read')")public ApiResponse<List<EnrollmentResponse>> byStudent(@PathVariable UUID id){return ApiResponse.success(service.getEnrollmentsByStudent(id));}
+ @GetMapping("/class/{id}")@PreAuthorize("hasAuthority('enrollment:read')")public ApiResponse<List<EnrollmentResponse>> byClass(@PathVariable UUID id){return ApiResponse.success(service.getEnrollmentsByClass(id));}
+ private Pageable pageable(int page,int size,String value){String[]p=value.split(",",2);Set<String>allowed=Set.of("enrolledDate","startDate","status","enrollmentCode","createdAt");String field=allowed.contains(p[0])?p[0]:"enrolledDate";Sort.Direction direction=p.length>1&&"asc".equalsIgnoreCase(p[1])?Sort.Direction.ASC:Sort.Direction.DESC;return PageRequest.of(Math.max(0,page),Math.min(Math.max(size,1),100),Sort.by(direction,field));}
 }

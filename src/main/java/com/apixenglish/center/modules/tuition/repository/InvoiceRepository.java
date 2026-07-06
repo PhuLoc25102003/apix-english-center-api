@@ -21,6 +21,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     List<Invoice> findByStudentIdAndDeletedAtIsNull(UUID studentId);
 
     List<Invoice> findByClazzIdAndDeletedAtIsNull(UUID classId);
+    List<Invoice> findByEnrollmentIdAndDeletedAtIsNull(UUID enrollmentId);
 
     @Query("SELECT COUNT(i) > 0 FROM Invoice i " +
            "WHERE i.deletedAt IS NULL AND i.student.id = :studentId AND i.clazz.id = :classId " +

@@ -1,0 +1,2 @@
+package com.apixenglish.center.modules.classmanagement.repository;import com.apixenglish.center.modules.classmanagement.entity.EnrollmentTransfer;import org.springframework.data.jpa.repository.JpaRepository;import java.util.*;
+public interface EnrollmentTransferRepository extends JpaRepository<EnrollmentTransfer,UUID>{List<EnrollmentTransfer> findByFromEnrollmentIdOrToEnrollmentIdOrderByTransferDateDesc(UUID fromId,UUID toId);}

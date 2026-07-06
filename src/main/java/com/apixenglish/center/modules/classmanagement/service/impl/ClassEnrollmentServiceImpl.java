@@ -1,135 +1,19 @@
 package com.apixenglish.center.modules.classmanagement.service.impl;
-
-import com.apixenglish.center.common.exception.BusinessException;
-import com.apixenglish.center.common.exception.ConflictException;
-import com.apixenglish.center.common.exception.ResourceNotFoundException;
-import com.apixenglish.center.modules.classmanagement.dto.request.EnrollStudentRequest;
-import com.apixenglish.center.modules.classmanagement.dto.response.EnrollmentResponse;
-import com.apixenglish.center.modules.classmanagement.entity.ClassEnrollment;
-import com.apixenglish.center.modules.classmanagement.entity.Clazz;
-import com.apixenglish.center.modules.classmanagement.mapper.ClassEnrollmentMapper;
-import com.apixenglish.center.modules.classmanagement.repository.ClassEnrollmentRepository;
-import com.apixenglish.center.modules.classmanagement.repository.ClazzRepository;
-import com.apixenglish.center.modules.classmanagement.service.ClassEnrollmentService;
-import com.apixenglish.center.modules.student.entity.Student;
-import com.apixenglish.center.modules.student.repository.StudentRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-@Service
-@RequiredArgsConstructor
-public class ClassEnrollmentServiceImpl implements ClassEnrollmentService {
-
-    private final ClassEnrollmentRepository classEnrollmentRepository;
-    private final ClazzRepository clazzRepository;
-    private final StudentRepository studentRepository;
-    private final ClassEnrollmentMapper classEnrollmentMapper;
-
-    @Override
-    @Transactional
-    public EnrollmentResponse enrollStudent(EnrollStudentRequest request) {
-        Student student = studentRepository.findById(request.getStudentId())
-                .filter(s -> s.getDeletedAt() == null)
-                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
-
-        Clazz clazz = clazzRepository.findById(request.getClassId())
-                .filter(c -> c.getDeletedAt() == null)
-                .orElseThrow(() -> new ResourceNotFoundException("Class not found"));
-
-        // Check duplicate active enrollment in class
-        if (classEnrollmentRepository.existsByStudentIdAndClazzIdAndStatusAndDeletedAtIsNull(
-                request.getStudentId(), request.getClassId(), "ACTIVE")) {
-            throw new ConflictException("Student already has an active enrollment in this class");
-        }
-
-        // Check class capacity limit
-        long activeCount = classEnrollmentRepository.countByClazzIdAndStatusAndDeletedAtIsNull(request.getClassId(), "ACTIVE");
-        if (activeCount >= clazz.getCapacity()) {
-            throw new BusinessException("Class capacity exceeded", "CLASS_CAPACITY_EXCEEDED");
-        }
-
-        String enrollmentCode = generateNextEnrollmentCode();
-
-        ClassEnrollment enrollment = ClassEnrollment.builder()
-                .clazz(clazz)
-                .student(student)
-                .enrollmentCode(enrollmentCode)
-                .enrolledDate(LocalDate.now())
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .status("ACTIVE")
-                .source(request.getSource())
-                .note(request.getNote())
-                .build();
-
-        ClassEnrollment savedEnrollment = classEnrollmentRepository.save(enrollment);
-        return classEnrollmentMapper.toResponse(savedEnrollment);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<EnrollmentResponse> getEnrollmentsByStudent(UUID studentId) {
-        if (!studentRepository.existsById(studentId)) {
-            throw new ResourceNotFoundException("Student not found");
-        }
-        return classEnrollmentRepository.findByStudentIdAndDeletedAtIsNull(studentId)
-                .stream()
-                .map(classEnrollmentMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<EnrollmentResponse> getEnrollmentsByClass(UUID classId) {
-        if (!clazzRepository.existsById(classId)) {
-            throw new ResourceNotFoundException("Class not found");
-        }
-        return classEnrollmentRepository.findByClazzIdAndDeletedAtIsNull(classId)
-                .stream()
-                .map(classEnrollmentMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public EnrollmentResponse cancelEnrollment(UUID id) {
-        ClassEnrollment enrollment = classEnrollmentRepository.findById(id)
-                .filter(e -> e.getDeletedAt() == null)
-                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
-
-        enrollment.setStatus("CANCELLED");
-        ClassEnrollment updated = classEnrollmentRepository.save(enrollment);
-        return classEnrollmentMapper.toResponse(updated);
-    }
-
-    @Override
-    @Transactional
-    public EnrollmentResponse completeEnrollment(UUID id) {
-        ClassEnrollment enrollment = classEnrollmentRepository.findById(id)
-                .filter(e -> e.getDeletedAt() == null)
-                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found"));
-
-        enrollment.setStatus("COMPLETED");
-        ClassEnrollment updated = classEnrollmentRepository.save(enrollment);
-        return classEnrollmentMapper.toResponse(updated);
-    }
-
-    private synchronized String generateNextEnrollmentCode() {
-        String maxCode = classEnrollmentRepository.findMaxEnrollmentCode();
-        if (maxCode == null) {
-            return "ENR000001";
-        }
-        try {
-            int numericPart = Integer.parseInt(maxCode.substring(3));
-            return String.format("ENR%06d", numericPart + 1);
-        } catch (Exception e) {
-            return "ENR" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        }
-    }
+import com.apixenglish.center.common.exception.*;import com.apixenglish.center.common.response.PageResponse;import com.apixenglish.center.modules.audit.repository.AuditLogRepository;import com.apixenglish.center.modules.audit.service.AuditService;import com.apixenglish.center.modules.classmanagement.dto.request.*;import com.apixenglish.center.modules.classmanagement.dto.response.*;import com.apixenglish.center.modules.classmanagement.entity.*;import com.apixenglish.center.modules.classmanagement.mapper.ClassEnrollmentMapper;import com.apixenglish.center.modules.classmanagement.repository.*;import com.apixenglish.center.modules.classmanagement.service.ClassEnrollmentService;import com.apixenglish.center.modules.student.entity.Student;import com.apixenglish.center.modules.student.repository.*;import com.apixenglish.center.modules.tuition.repository.InvoiceRepository;import com.apixenglish.center.modules.user.repository.UserRepository;import com.apixenglish.center.security.CurrentActor;import lombok.RequiredArgsConstructor;import org.springframework.data.domain.Pageable;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.Transactional;import java.math.BigDecimal;import java.time.LocalDate;import java.util.*;
+@Service @RequiredArgsConstructor public class ClassEnrollmentServiceImpl implements ClassEnrollmentService{
+ private final ClassEnrollmentRepository repository;private final ClazzRepository classes;private final StudentRepository students;private final ClassEnrollmentMapper mapper;private final EnrollmentTransferRepository transfers;private final EnrollmentFreezeRepository freezes;private final StudentParentRepository studentParents;private final InvoiceRepository invoices;private final AuditLogRepository auditLogs;private final AuditService audit;private final CurrentActor actor;private final UserRepository users;
+ @Override @Transactional(readOnly=true)public PageResponse<EnrollmentResponse> list(String search,String status,UUID classId,UUID studentId,UUID campusId,String source,LocalDate from,LocalDate to,Pageable p){return PageResponse.of(repository.search(blank(search),blank(status),classId,studentId,campusId,blank(source),from,to,p).map(mapper::toResponse));}
+ @Override @Transactional(readOnly=true)public EnrollmentDetailResponse getDetail(UUID id){ClassEnrollment e=find(id);var student=e.getStudent();var c=e.getClazz();var course=c.getCourse();var linkedParents=actor.has("enrollment:read-parent-info")||actor.has("parent:read")?studentParents.findByStudentIdAndDeletedAtIsNull(student.getId()).stream().map(sp->EnrollmentDetailResponse.ParentSummary.builder().id(sp.getParent().getId()).parentCode(sp.getParent().getParentCode()).fullName(sp.getParent().getFullName()).relationship(sp.getRelationship().name()).primaryContact(sp.getIsPrimaryContact()).phone(sp.getParent().getPhone()).email(sp.getParent().getEmail()).build()).toList():List.<EnrollmentDetailResponse.ParentSummary>of();var invoiceList=invoices.findByEnrollmentIdAndDeletedAtIsNull(id);return EnrollmentDetailResponse.builder().enrollment(mapper.toResponse(e)).student(EnrollmentDetailResponse.StudentSummary.builder().id(student.getId()).studentCode(student.getStudentCode()).fullName(student.getFullName()).dateOfBirth(student.getDateOfBirth()).status(student.getStatus().name()).build()).clazz(EnrollmentDetailResponse.ClassSummary.builder().id(c.getId()).classCode(c.getClassCode()).name(c.getName()).courseId(course==null?null:course.getId()).courseName(course==null?null:course.getName()).levelName(course==null||course.getLevel()==null?null:course.getLevel().getName()).campusName(c.getCampus()==null?null:c.getCampus().getName()).build()).parents(linkedParents)
+  .transferHistory(transfers.findByFromEnrollmentIdOrToEnrollmentIdOrderByTransferDateDesc(id,id).stream().map(t->EnrollmentDetailResponse.TransferSummary.builder().id(t.getId()).fromEnrollmentId(t.getFromEnrollment().getId()).toEnrollmentId(t.getToEnrollment().getId()).fromClassId(t.getFromClass().getId()).toClassId(t.getToClass().getId()).transferDate(t.getTransferDate()).reason(t.getReason()).build()).toList())
+  .freezeHistory(freezes.findByEnrollmentIdAndDeletedAtIsNullOrderByStartDateDesc(id).stream().map(f->EnrollmentDetailResponse.FreezeSummary.builder().id(f.getId()).startDate(f.getStartDate()).endDate(f.getEndDate()).reason(f.getReason()).status(f.getStatus()).build()).toList())
+  .tuitionSummary(EnrollmentDetailResponse.TuitionSummary.builder().invoiceCount(invoiceList.size()).totalAmount(invoiceList.stream().map(i->i.getTotalAmount()).reduce(BigDecimal.ZERO,BigDecimal::add)).paidAmount(invoiceList.stream().map(i->i.getPaidAmount()).reduce(BigDecimal.ZERO,BigDecimal::add)).remainingAmount(invoiceList.stream().map(i->i.getRemainingAmount()).reduce(BigDecimal.ZERO,BigDecimal::add)).build())
+  .auditSummary(auditLogs.findTop20ByEntityTypeAndEntityIdOrderByCreatedAtDesc("ClassEnrollment",id).stream().map(a->EnrollmentDetailResponse.AuditSummary.builder().action(a.getAction()).createdAt(a.getCreatedAt()).actorUserId(a.getActorUserId()).build()).toList()).build();}
+ @Override @Transactional public EnrollmentResponse enrollStudent(EnrollStudentRequest r){Student s=students.findById(r.getStudentId()).filter(x->x.getDeletedAt()==null).orElseThrow(()->new ResourceNotFoundException("Student not found"));Clazz c=classes.findById(r.getClassId()).filter(x->x.getDeletedAt()==null).orElseThrow(()->new ResourceNotFoundException("Class not found"));validateCapacity(c);if(repository.existsByStudentIdAndClazzIdAndStatusAndDeletedAtIsNull(s.getId(),c.getId(),"ACTIVE"))throw new ConflictException("Student already has an active enrollment in this class","DUPLICATE_ACTIVE_ENROLLMENT");ClassEnrollment e=ClassEnrollment.builder().student(s).clazz(c).enrollmentCode(nextCode()).enrolledDate(r.getEnrolledDate()).startDate(r.getStartDate()).status(r.getStatus()==null?"ACTIVE":r.getStatus()).source(r.getSource()==null?"OTHER":r.getSource()).note(r.getNote()).build();e=repository.save(e);record("ENROLLMENT_CREATED",e,null);return mapper.toResponse(e);}
+ @Override @Transactional public EnrollmentResponse update(UUID id,UpdateEnrollmentRequest r){ClassEnrollment e=find(id);requireMutable(e);validateDates(r.getStartDate(),r.getEndDate());Map<String,Object> before=snapshot(e);e.setEnrolledDate(r.getEnrolledDate());e.setStartDate(r.getStartDate());e.setEndDate(r.getEndDate());e.setStatus(r.getStatus());e.setSource(r.getSource());e.setNote(r.getNote());repository.save(e);record("ENROLLMENT_UPDATED",e,before);return mapper.toResponse(e);}
+ @Override @Transactional public EnrollmentResponse cancel(UUID id,CancelEnrollmentRequest r){ClassEnrollment e=find(id);requireMutable(e);Map<String,Object>b=snapshot(e);e.setStatus("CANCELLED");e.setCancellationReason(r.getReason());e.setEndDate(e.getEndDate()==null?LocalDate.now():e.getEndDate());repository.save(e);record("ENROLLMENT_CANCELLED",e,b);return mapper.toResponse(e);}
+ @Override @Transactional public EnrollmentResponse transfer(UUID id,TransferEnrollmentRequest r){ClassEnrollment old=find(id);requireMutable(old);if(old.getClazz().getId().equals(r.getToClassId()))throw new BusinessException("Target class must differ from source class","SAME_TRANSFER_CLASS");Clazz target=classes.findById(r.getToClassId()).filter(x->x.getDeletedAt()==null).orElseThrow(()->new ResourceNotFoundException("Target class not found"));validateCapacity(target);if(repository.existsByStudentIdAndClazzIdAndStatusAndDeletedAtIsNull(old.getStudent().getId(),target.getId(),"ACTIVE"))throw new ConflictException("Student already has an active enrollment in target class","DUPLICATE_ACTIVE_ENROLLMENT");old.setStatus("TRANSFERRED");old.setEndDate(r.getTransferDate());old.setNote(append(old.getNote(),"Transferred: "+r.getReason()));repository.save(old);ClassEnrollment next=repository.save(ClassEnrollment.builder().clazz(target).student(old.getStudent()).enrollmentCode(nextCode()).enrolledDate(r.getTransferDate()).startDate(r.getTransferDate()).status("ACTIVE").source("OTHER").note("Transferred from "+old.getEnrollmentCode()+": "+r.getReason()).build());transfers.save(EnrollmentTransfer.builder().fromEnrollment(old).toEnrollment(next).fromClass(old.getClazz()).toClass(target).transferDate(r.getTransferDate()).reason(r.getReason()).transferredBy(users.findById(actor.userId()).orElse(null)).build());record("ENROLLMENT_TRANSFERRED",old,null);record("ENROLLMENT_CREATED_BY_TRANSFER",next,null);return mapper.toResponse(next);}
+ @Override @Transactional public EnrollmentResponse freeze(UUID id,FreezeEnrollmentRequest r){ClassEnrollment e=find(id);requireMutable(e);validateDates(r.getStartDate(),r.getEndDate());String previous=e.getStatus();freezes.save(EnrollmentFreeze.builder().enrollment(e).startDate(r.getStartDate()).endDate(r.getEndDate()).reason(r.getReason()).previousStatus(previous).status("ACTIVE").build());e.setStatus("FROZEN");e.setNote(append(e.getNote(),"Frozen "+r.getStartDate()+" to "+r.getEndDate()+": "+r.getReason()));repository.save(e);record("ENROLLMENT_FROZEN",e,Map.of("status",previous));return mapper.toResponse(e);}
+ @Override @Transactional public EnrollmentResponse complete(UUID id,CompleteEnrollmentRequest r){ClassEnrollment e=find(id);requireMutable(e);Map<String,Object>b=snapshot(e);e.setStatus("COMPLETED");e.setEndDate(r.getCompletedDate());e.setNote(append(e.getNote(),r.getNote()));repository.save(e);record("ENROLLMENT_COMPLETED",e,b);return mapper.toResponse(e);}
+ @Override @Transactional(readOnly=true)public List<EnrollmentResponse> getEnrollmentsByStudent(UUID id){return repository.findByStudentIdAndDeletedAtIsNull(id).stream().map(mapper::toResponse).toList();}@Override @Transactional(readOnly=true)public List<EnrollmentResponse> getEnrollmentsByClass(UUID id){return repository.findByClazzIdAndDeletedAtIsNull(id).stream().map(mapper::toResponse).toList();}
+ private ClassEnrollment find(UUID id){return repository.findById(id).filter(e->e.getDeletedAt()==null).orElseThrow(()->new ResourceNotFoundException("Enrollment not found"));}private void validateCapacity(Clazz c){if(repository.countCapacityOccupying(c.getId())>=c.getCapacity()&&!actor.has("enrollment:override-capacity"))throw new BusinessException("Class capacity has been reached","CLASS_CAPACITY_EXCEEDED");}private void requireMutable(ClassEnrollment e){if(("COMPLETED".equals(e.getStatus())||"CANCELLED".equals(e.getStatus()))&&!actor.has("enrollment:override-capacity"))throw new ConflictException("Completed or cancelled enrollment cannot be changed","ENROLLMENT_TERMINAL");}private void validateDates(LocalDate start,LocalDate end){if(end!=null&&end.isBefore(start))throw new BusinessException("End date must be on or after start date","INVALID_ENROLLMENT_DATE_RANGE");}private synchronized String nextCode(){String max=repository.findMaxEnrollmentCode();try{return max==null?"ENR000001":String.format("ENR%06d",Integer.parseInt(max.substring(3))+1);}catch(Exception x){return "ENR"+UUID.randomUUID().toString().substring(0,6).toUpperCase();}}private Map<String,Object>snapshot(ClassEnrollment e){Map<String,Object>m=new LinkedHashMap<>();m.put("status",e.getStatus());m.put("classId",e.getClazz().getId());m.put("startDate",e.getStartDate());m.put("endDate",e.getEndDate());return m;}private void record(String action,ClassEnrollment e,Map<String,Object>before){audit.record(action,"enrollment","ClassEnrollment",e.getId(),before,snapshot(e));}private String blank(String v){return v==null||v.isBlank()?null:v;}private String append(String base,String value){return value==null||value.isBlank()?base:(base==null||base.isBlank()?value:base+"\n"+value);}
 }

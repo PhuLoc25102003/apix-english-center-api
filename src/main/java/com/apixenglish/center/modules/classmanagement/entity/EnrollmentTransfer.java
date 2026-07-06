@@ -1,0 +1,5 @@
+package com.apixenglish.center.modules.classmanagement.entity;
+import com.apixenglish.center.common.domain.SoftDeleteEntity;import com.apixenglish.center.modules.user.entity.User;import jakarta.persistence.*;import lombok.*;import java.time.LocalDate;
+@Entity @Table(name="enrollment_transfers") @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor public class EnrollmentTransfer extends SoftDeleteEntity{
+ @ManyToOne(fetch=FetchType.LAZY)@JoinColumn(name="from_enrollment_id",nullable=false)private ClassEnrollment fromEnrollment;@ManyToOne(fetch=FetchType.LAZY)@JoinColumn(name="to_enrollment_id",nullable=false)private ClassEnrollment toEnrollment;@ManyToOne(fetch=FetchType.LAZY)@JoinColumn(name="from_class_id",nullable=false)private Clazz fromClass;@ManyToOne(fetch=FetchType.LAZY)@JoinColumn(name="to_class_id",nullable=false)private Clazz toClass;@Column(name="transfer_date",nullable=false)private LocalDate transferDate;@Column(nullable=false)private String reason;@ManyToOne(fetch=FetchType.LAZY)@JoinColumn(name="transferred_by")private User transferredBy;
+}
