@@ -2,6 +2,7 @@ package com.apixenglish.center.modules.user.entity;
 
 import com.apixenglish.center.common.domain.SoftDeleteEntity;
 import com.apixenglish.center.modules.role.entity.Role;
+import com.apixenglish.center.modules.campus.entity.Campus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -31,6 +32,10 @@ public class UserRole extends SoftDeleteEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "campus_id")
+    private Campus campus;
 
     @Column(name = "assigned_at", nullable = false)
     private Instant assignedAt;

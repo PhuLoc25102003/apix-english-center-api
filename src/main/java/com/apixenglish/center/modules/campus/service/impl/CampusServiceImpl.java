@@ -10,12 +10,14 @@ import com.apixenglish.center.modules.campus.entity.Campus;
 import com.apixenglish.center.modules.campus.mapper.CampusMapper;
 import com.apixenglish.center.modules.campus.repository.CampusRepository;
 import com.apixenglish.center.modules.campus.service.CampusService;
+import com.apixenglish.center.modules.campus.dto.response.CampusLookupResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -95,5 +97,20 @@ public class CampusServiceImpl implements CampusService {
 
         campus.delete();
         campusRepository.save(campus);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CampusLookupResponse> lookupCampuses(String search, Boolean includeInactive) {
+        boolean inclInactive = includeInactive != null && includeInactive;
+        List<Campus> campuses = campusRepository.lookupCampuses(search, inclInactive);
+        return campuses.stream()
+                .map(c -> CampusLookupResponse.builder()
+                        .id(c.getId())
+                        .code(c.getCode())
+                        .name(c.getName())
+                        .displayName("[" + c.getCode() + "] " + c.getName())
+                        .build())
+                .toList();
     }
 }

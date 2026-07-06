@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,4 +25,12 @@ public interface CampusRepository extends JpaRepository<Campus, UUID> {
            "     LOWER(c.name) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
            "     LOWER(c.code) LIKE LOWER(CONCAT('%', cast(:search as string), '%')))")
     Page<Campus> searchCampuses(@Param("search") String search, Pageable pageable);
+
+    @Query("SELECT c FROM Campus c " +
+           "WHERE c.deletedAt IS NULL " +
+           "AND (:includeInactive = true OR c.isActive = true) " +
+           "AND (cast(:search as string) IS NULL OR " +
+           "     LOWER(c.name) LIKE LOWER(CONCAT('%', cast(:search as string), '%')) OR " +
+           "     LOWER(c.code) LIKE LOWER(CONCAT('%', cast(:search as string), '%')))")
+    List<Campus> lookupCampuses(@Param("search") String search, @Param("includeInactive") boolean includeInactive);
 }

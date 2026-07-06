@@ -4,8 +4,10 @@ import com.apixenglish.center.common.response.PageResponse;
 import com.apixenglish.center.modules.campus.dto.request.CreateCampusRequest;
 import com.apixenglish.center.modules.campus.dto.request.UpdateCampusRequest;
 import com.apixenglish.center.modules.campus.dto.response.CampusResponse;
+import com.apixenglish.center.modules.campus.dto.response.CampusLookupResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface CampusService {
@@ -14,4 +16,5 @@ public interface CampusService {
     CampusResponse createCampus(CreateCampusRequest request);
     CampusResponse updateCampus(UUID id, UpdateCampusRequest request);
     void deleteCampus(UUID id);
+    List<CampusLookupResponse> lookupCampuses(String search, Boolean includeInactive);
 }

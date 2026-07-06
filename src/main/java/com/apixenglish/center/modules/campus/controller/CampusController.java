@@ -5,12 +5,14 @@ import com.apixenglish.center.common.response.PageResponse;
 import com.apixenglish.center.modules.campus.dto.request.CreateCampusRequest;
 import com.apixenglish.center.modules.campus.dto.request.UpdateCampusRequest;
 import com.apixenglish.center.modules.campus.dto.response.CampusResponse;
+import com.apixenglish.center.modules.campus.dto.response.CampusLookupResponse;
 import com.apixenglish.center.modules.campus.service.CampusService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +33,16 @@ import java.util.UUID;
 public class CampusController {
 
     private final CampusService campusService;
+
+    @GetMapping("/lookup")
+    @PreAuthorize("hasAuthority('campus:read')")
+    public ResponseEntity<ApiResponse<List<CampusLookupResponse>>> lookupCampuses(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false, defaultValue = "false") Boolean includeInactive
+    ) {
+        List<CampusLookupResponse> response = campusService.lookupCampuses(search, includeInactive);
+        return ResponseEntity.ok(ApiResponse.success(response, "Campuses retrieved successfully"));
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CampusResponse>>> getCampuses(

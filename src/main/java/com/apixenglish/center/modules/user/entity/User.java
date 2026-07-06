@@ -28,6 +28,12 @@ public class User extends SoftDeleteEntity {
     @Column(name = "phone", unique = true)
     private String phone;
 
+    @Column(name = "username", unique = true)
+    private String username;
+
+    @Column(name = "mfa_enabled", nullable = false)
+    private Boolean mfaEnabled = false;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
