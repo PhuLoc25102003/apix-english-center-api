@@ -17,6 +17,8 @@ import com.apixenglish.center.modules.tuition.dto.response.InvoiceResponse;
 import com.apixenglish.center.modules.tuition.dto.response.TuitionPackageResponse;
 import com.apixenglish.center.modules.tuition.entity.Invoice;
 import com.apixenglish.center.modules.tuition.entity.InvoicePayment;
+import com.apixenglish.center.modules.tuition.entity.InvoiceItem;
+import com.apixenglish.center.modules.audit.service.AuditService;
 import com.apixenglish.center.modules.tuition.entity.TuitionPackage;
 import com.apixenglish.center.modules.tuition.mapper.InvoiceMapper;
 import com.apixenglish.center.modules.tuition.mapper.InvoicePaymentMapper;
@@ -53,6 +55,7 @@ public class TuitionServiceImpl implements TuitionService {
     private final InvoicePaymentMapper invoicePaymentMapper;
     private final TuitionPackageMapper tuitionPackageMapper;
     private final TuitionCalculator tuitionCalculator;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -113,6 +116,11 @@ public class TuitionServiceImpl implements TuitionService {
                 ? "Monthly tuition " + periodLabel + " - " + clazz.getName()
                 : request.getTitle().trim();
 
+        BigDecimal extraAmount = request.getItems() == null ? BigDecimal.ZERO : request.getItems().stream()
+                .map(item -> item.getQuantity().multiply(item.getUnitPrice()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal finalTotal = calculation.totalAmount().add(extraAmount);
+
         Invoice invoice = Invoice.builder()
                 .student(student)
                 .clazz(clazz)
@@ -129,14 +137,22 @@ public class TuitionServiceImpl implements TuitionService {
                 .discountType(discountType)
                 .discountValue(discountValue)
                 .discountAmount(calculation.discountAmount())
-                .totalAmount(calculation.totalAmount())
+                .totalAmount(finalTotal)
                 .paidAmount(BigDecimal.ZERO)
-                .remainingAmount(calculation.totalAmount())
+                .remainingAmount(finalTotal)
                 .dueDate(request.getDueDate())
                 .status(request.getDueDate().isBefore(LocalDate.now()) ? "OVERDUE" : "UNPAID")
                 .build();
-
-        return invoiceMapper.toResponse(invoiceRepository.save(invoice));
+        invoice.getItems().add(InvoiceItem.builder().invoice(invoice).feeType("MONTHLY_TUITION")
+                .description("Monthly tuition").quantity(BigDecimal.valueOf(request.getNumberOfMonths()))
+                .unitPrice(monthlyFee).amount(calculation.subtotalAmount()).build());
+        if (request.getItems() != null) request.getItems().forEach(item -> invoice.getItems().add(InvoiceItem.builder()
+                .invoice(invoice).feeType(item.getFeeType()).description(item.getDescription()).quantity(item.getQuantity())
+                .unitPrice(item.getUnitPrice()).amount(item.getQuantity().multiply(item.getUnitPrice())).build()));
+        Invoice saved = invoiceRepository.save(invoice);
+        auditService.record("INVOICE_CREATED", "tuition", "Invoice", saved.getId(), null,
+                java.util.Map.of("totalAmount", saved.getTotalAmount(), "itemCount", saved.getItems().size()));
+        return invoiceMapper.toResponse(saved);
     }
 
     @Override
@@ -227,6 +243,9 @@ public class TuitionServiceImpl implements TuitionService {
             invoice.setStatus("PARTIALLY_PAID");
         }
         invoiceRepository.save(invoice);
+
+        auditService.record("PAYMENT_COMPLETED", "tuition", "InvoicePayment", savedPayment.getId(), null,
+                java.util.Map.of("invoiceId", invoice.getId(), "amount", request.getAmount()));
 
         return invoicePaymentMapper.toResponse(savedPayment);
     }

@@ -39,6 +39,9 @@ public class InvoiceMapper {
                 .remainingAmount(invoice.getRemainingAmount())
                 .dueDate(invoice.getDueDate())
                 .status(invoice.getStatus())
+                .items(invoice.getItems().stream().map(item -> InvoiceResponse.InvoiceItemResponse.builder()
+                        .id(item.getId()).feeType(item.getFeeType()).description(item.getDescription())
+                        .quantity(item.getQuantity()).unitPrice(item.getUnitPrice()).amount(item.getAmount()).build()).toList())
                 .build();
     }
 }

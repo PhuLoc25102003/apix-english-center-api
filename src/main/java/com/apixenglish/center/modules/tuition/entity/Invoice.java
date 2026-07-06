@@ -18,6 +18,10 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 
 @Entity
 @Table(name = "invoices")
@@ -91,4 +95,8 @@ public class Invoice extends SoftDeleteEntity {
 
     @Column(name = "status", nullable = false)
     private String status; // UNPAID, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED, REFUNDED
+
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = false)
+    @Builder.Default
+    private List<InvoiceItem> items = new ArrayList<>();
 }

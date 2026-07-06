@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.List;
 
 @Data
 @Builder
@@ -39,4 +40,15 @@ public class InvoiceResponse {
     private BigDecimal remainingAmount;
     private LocalDate dueDate;
     private String status;
+    private List<InvoiceItemResponse> items;
+
+    @Data @Builder @NoArgsConstructor @AllArgsConstructor
+    public static class InvoiceItemResponse {
+        private UUID id;
+        private String feeType;
+        private String description;
+        private BigDecimal quantity;
+        private BigDecimal unitPrice;
+        private BigDecimal amount;
+    }
 }
