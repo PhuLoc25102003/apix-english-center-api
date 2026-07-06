@@ -21,7 +21,7 @@ public class CourseMapper {
                 .description(course.getDescription())
                 .totalLessons(course.getTotalLessons())
                 .durationMinutes(course.getDurationMinutes())
-                .defaultTuitionFee(course.getDefaultTuitionFee())
+                .defaultMonthlyTuitionFee(course.getDefaultMonthlyTuitionFee())
                 .status(course.getStatus())
                 .build();
     }

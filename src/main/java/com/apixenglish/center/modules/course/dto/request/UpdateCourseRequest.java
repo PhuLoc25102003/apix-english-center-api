@@ -37,9 +37,9 @@ public class UpdateCourseRequest {
     @Min(value = 1, message = "Duration minutes must be greater than 0")
     private Integer durationMinutes;
 
-    @NotNull(message = "Default tuition fee must not be null")
-    @DecimalMin(value = "0.0", message = "Default tuition fee must not be negative")
-    private BigDecimal defaultTuitionFee;
+    @NotNull(message = "Default monthly tuition fee must not be null")
+    @DecimalMin(value = "0.0", message = "Default monthly tuition fee must not be negative")
+    private BigDecimal defaultMonthlyTuitionFee;
 
     @NotBlank(message = "Status must not be blank")
     private String status; // DRAFT, ACTIVE, INACTIVE

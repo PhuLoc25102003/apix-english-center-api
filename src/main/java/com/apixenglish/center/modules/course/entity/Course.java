@@ -43,8 +43,8 @@ public class Course extends SoftDeleteEntity {
     @Column(name = "duration_minutes", nullable = false)
     private Integer durationMinutes;
 
-    @Column(name = "default_tuition_fee", nullable = false)
-    private BigDecimal defaultTuitionFee;
+    @Column(name = "default_monthly_tuition_fee", nullable = false)
+    private BigDecimal defaultMonthlyTuitionFee;
 
     @Column(name = "status", nullable = false)
     private String status; // DRAFT, ACTIVE, INACTIVE

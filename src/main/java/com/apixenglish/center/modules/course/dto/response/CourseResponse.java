@@ -20,6 +20,6 @@ public class CourseResponse {
     private String description;
     private Integer totalLessons;
     private Integer durationMinutes;
-    private BigDecimal defaultTuitionFee;
+    private BigDecimal defaultMonthlyTuitionFee;
     private String status;
 }

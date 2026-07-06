@@ -63,7 +63,7 @@ public class CourseServiceImpl implements CourseService {
                 .description(request.getDescription())
                 .totalLessons(request.getTotalLessons())
                 .durationMinutes(request.getDurationMinutes())
-                .defaultTuitionFee(request.getDefaultTuitionFee())
+                .defaultMonthlyTuitionFee(request.getDefaultMonthlyTuitionFee())
                 .status(request.getStatus())
                 .build();
 
@@ -94,7 +94,7 @@ public class CourseServiceImpl implements CourseService {
         course.setDescription(request.getDescription());
         course.setTotalLessons(request.getTotalLessons());
         course.setDurationMinutes(request.getDurationMinutes());
-        course.setDefaultTuitionFee(request.getDefaultTuitionFee());
+        course.setDefaultMonthlyTuitionFee(request.getDefaultMonthlyTuitionFee());
         course.setStatus(request.getStatus());
 
         Course updatedCourse = courseRepository.save(course);

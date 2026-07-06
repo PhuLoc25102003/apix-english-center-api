@@ -803,7 +803,8 @@ Stores course levels.
 
 #### `courses`
 
-Stores sellable/teachable courses.
+Stores academic content and curriculum planning data. A course is not a fixed
+billing package, and its estimated lesson count must never define a tuition debt.
 
 | Column                | Type          | Rule                              |
 | --------------------- | ------------- | --------------------------------- |
@@ -814,7 +815,7 @@ Stores sellable/teachable courses.
 | `description`         | TEXT          | Nullable                          |
 | `total_lessons`       | INTEGER       | Must be greater than 0            |
 | `duration_minutes`    | INTEGER       | Default lesson duration           |
-| `default_tuition_fee` | NUMERIC(14,2) | Default 0                         |
+| `default_monthly_tuition_fee` | NUMERIC(14,2) | Monthly reference amount; never a full-course price |
 | `status`              | VARCHAR(30)   | DRAFT, ACTIVE, INACTIVE, ARCHIVED |
 | common columns        |               | Required                          |
 
@@ -1208,19 +1209,68 @@ Stores delivery records to parents. Only Office Staff should deliver reports.
 
 ### 6.9 Tuition and payment
 
+#### Monthly tuition business rules
+
+Tuition is billed by calendar month or by a configured group of months. It is
+never billed as a fixed full-course amount.
+
+- Course and class durations are academic estimates only. They are not billing
+  boundaries, and a class may extend beyond `expected_end_date` when learners
+  need more time.
+- `courses.default_monthly_tuition_fee` is a monthly reference used when an
+  enrollment or class-specific monthly fee has not been configured. It must not
+  be multiplied by the course lesson count.
+- Each invoice covers an explicit inclusive monthly period, represented by
+  `billing_start_month`, `billing_end_month`, and `number_of_months`.
+- A student may pay one month, three months, or another active package. The
+  three-month advance discount is configuration, not hard-coded business logic.
+- Package discounts support `PERCENTAGE` and `FIXED_AMOUNT`; `NONE` is used for
+  packages without a discount.
+- Invoice totals are snapshots: `subtotal_amount = monthly_fee * number_of_months`,
+  `total_amount = subtotal_amount - discount_amount`, and
+  `remaining_amount = total_amount - paid_amount`.
+- Payment records are append-only and separate from invoice/billing records.
+  Partial payments update invoice aggregates but never replace payment history.
+- Debt is the sum of `remaining_amount` from unpaid, partially paid, or overdue
+  monthly invoices. Course completion and expected class end dates do not create
+  or clear debt.
+- Overlapping active billing periods for the same student and class are rejected.
+- Invoice filters and counts are applied server-side after student, class,
+  campus, billing month, status, and search criteria.
+
+#### `tuition_packages`
+
+| Column             | Type          | Rule                                      |
+| ------------------ | ------------- | ----------------------------------------- |
+| `id`               | UUID          | PK                                        |
+| `name`             | VARCHAR(150)  | Not null                                  |
+| `number_of_months` | INTEGER       | Greater than 0                            |
+| `discount_type`    | VARCHAR(30)   | NONE, PERCENTAGE, FIXED_AMOUNT            |
+| `discount_value`   | NUMERIC(14,2) | Non-negative; percentage cannot exceed 100 |
+| `is_active`        | BOOLEAN       | Default true                              |
+| `description`      | TEXT          | Nullable                                  |
+| common columns     |               | Required                                  |
+
 #### `invoices`
 
-Stores tuition invoices.
+Stores immutable monthly billing-period snapshots. Payments remain separate.
 
 | Column             | Type          | Rule                                                              |
 | ------------------ | ------------- | ----------------------------------------------------------------- |
 | `id`               | UUID          | PK                                                                |
 | `student_id`       | UUID          | FK students.id                                                    |
+| `class_id`         | UUID          | FK classes.id; required for new monthly invoices                  |
 | `enrollment_id`    | UUID          | Nullable FK class_enrollments.id                                  |
+| `tuition_package_id` | UUID        | Nullable FK tuition_packages.id                                   |
 | `invoice_no`       | VARCHAR(100)  | Unique                                                            |
-| `issue_date`       | DATE          | Not null                                                          |
+| `billing_start_month` | DATE       | First day of the first billed month                               |
+| `billing_end_month` | DATE         | First day of the last billed month                                |
+| `number_of_months` | INTEGER       | Greater than 0                                                    |
+| `monthly_fee`      | NUMERIC(14,2) | Monthly fee snapshot                                              |
 | `due_date`         | DATE          | Not null                                                          |
 | `subtotal_amount`  | NUMERIC(14,2) | Not null                                                          |
+| `discount_type`    | VARCHAR(30)   | NONE, PERCENTAGE, FIXED_AMOUNT                                    |
+| `discount_value`   | NUMERIC(14,2) | Package/promotion value snapshot                                  |
 | `discount_amount`  | NUMERIC(14,2) | Default 0                                                         |
 | `total_amount`     | NUMERIC(14,2) | Not null                                                          |
 | `paid_amount`      | NUMERIC(14,2) | Default 0                                                         |
@@ -1759,7 +1809,7 @@ erDiagram
         TEXT description
         INTEGER total_lessons
         INTEGER duration_minutes
-        NUMERIC default_tuition_fee
+        NUMERIC default_monthly_tuition_fee
         VARCHAR status
         TIMESTAMPTZ created_at
         TIMESTAMPTZ updated_at
@@ -2041,11 +2091,18 @@ erDiagram
     INVOICES {
         UUID id PK
         UUID student_id FK
+        UUID class_id FK
         UUID enrollment_id FK
+        UUID tuition_package_id FK
         VARCHAR invoice_no UK
-        DATE issue_date
+        DATE billing_start_month
+        DATE billing_end_month
+        INTEGER number_of_months
+        NUMERIC monthly_fee
         DATE due_date
         NUMERIC subtotal_amount
+        VARCHAR discount_type
+        NUMERIC discount_value
         NUMERIC discount_amount
         NUMERIC total_amount
         NUMERIC paid_amount
@@ -2528,11 +2585,26 @@ Commit transaction
 
 ```text
 Lock invoice with optimistic version
+Validate invoice is not cancelled or refunded
 Create payment
 Recalculate paid_amount and remaining_amount
-Update invoice status
+Set PAID when remaining amount is zero
+Set PARTIALLY_PAID when a balance remains before due date
+Set OVERDUE when a balance remains after due date
 Create audit log
 Publish payment.completed event after commit
+```
+
+### 12.2.1 Create monthly tuition invoice
+
+```text
+Validate student, class, and optional enrollment relationship
+Normalize billing_start_month to the first day of the month
+Resolve monthly fee from request override or course monthly reference
+Validate selected package and number_of_months
+Reject overlapping active billing periods for the student and class
+Calculate subtotal, discount, total, paid, and remaining amounts
+Persist the invoice snapshot in one transaction
 ```
 
 ### 12.3 Mark attendance
