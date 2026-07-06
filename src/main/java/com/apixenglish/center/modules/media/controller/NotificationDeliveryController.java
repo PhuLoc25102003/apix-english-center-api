@@ -1,0 +1,4 @@
+package com.apixenglish.center.modules.media.controller;
+import com.apixenglish.center.common.response.ApiResponse; import com.apixenglish.center.modules.media.dto.VideoDtos.*; import com.apixenglish.center.modules.media.service.MediaVideoService; import jakarta.validation.Valid; import lombok.RequiredArgsConstructor; import org.springframework.security.access.prepost.PreAuthorize; import org.springframework.web.bind.annotation.*; import java.util.UUID;
+@RestController @RequestMapping("/api/v1/notification-deliveries") @RequiredArgsConstructor
+public class NotificationDeliveryController { private final MediaVideoService service; @PatchMapping("/{id}/status") @PreAuthorize("hasAuthority('manual-zalo:update-status')") public ApiResponse<DeliveryResponse> update(@PathVariable UUID id,@Valid @RequestBody DeliveryStatusRequest request){return ApiResponse.success(service.updateDelivery(id,request));} }

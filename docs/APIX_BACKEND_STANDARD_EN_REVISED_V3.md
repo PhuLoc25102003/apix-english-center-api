@@ -1100,6 +1100,41 @@ Stores calculation details for audit and explanation.
 
 Video can be integrated into the system, but the application must not store heavy files in PostgreSQL or on the app server.
 
+### 13.0 QR direct-to-storage video workflow
+
+The standard video workflow is desktop-orchestrated and mobile-uploaded. Office Staff or a Teacher selects the class, student, optional class session, video type, and month on desktop. The backend creates a short-lived `video_upload_sessions` record and returns a mobile upload URL as the QR payload. A phone opens that token-protected page, reads only the minimal immutable target details, requests a short-lived presigned `PUT`, and uploads directly to object storage. The phone then calls the completion API. The backend verifies the exact object key and stored object metadata, creates `media_videos` metadata, and completes the upload session. The desktop polls/refetches the video list, reviews the item, approves or rejects it, creates a revocable parent share link, prepares a Manual Zalo message, and records the manual delivery status. Every state-changing step is audited.
+
+The desktop selection is immutable from the mobile page. Staff must never have to transfer a phone video to a computer, video bytes must never be stored in PostgreSQL, and large video bytes must not pass through Spring Boot when presigned object-storage upload is available.
+
+Required video types are `FINAL_COURSE_VIDEO`, `FOREIGN_TEACHER_ACTIVITY`, `MONTHLY_PERSONAL_VIDEO`, `CLASS_ACTIVITY_VIDEO`, and `CUSTOM`.
+
+Required workflow states:
+
+- upload session: `PENDING`, `UPLOADING`, `COMPLETED`, `EXPIRED`, `CANCELLED`, `FAILED`;
+- media video: `UPLOADED`, `PROCESSING`, `READY`, `APPROVED`, `REJECTED`, `DELIVERED`, `ARCHIVED`;
+- share link: `ACTIVE`, `EXPIRED`, `REVOKED`;
+- Manual Zalo delivery: `PREPARED`, `COPIED`, `OPENED_ZALO`, `SENT_MANUALLY`, `FAILED`.
+
+Security and validation rules:
+
+- Upload and share tokens must be cryptographically random and unguessable. Store them separately and never reuse one token for both concerns.
+- Upload sessions expire after a configurable 15–30 minutes (default 20). Presigned uploads expire after a configurable 5–15 minutes (default 10).
+- A session is scoped to its original class, student, video type, session, and target month. The public mobile flow cannot change that target.
+- The token-protected mobile endpoints may be unauthenticated, but authorize only that one upload session. Return no parent contact details or other sensitive student data.
+- Accept only configured video MIME types and enforce the configured byte limit before signing and again against object metadata when completing.
+- Persist the expected bucket, object key, name, MIME type, and size during presign. Completion must match them and verify that the object exists.
+- Never expose storage credentials. Parent URLs contain only a separate revocable `share_token`, never `storage_key`.
+- Public share resolution returns a short-lived signed read URL and increments access metadata.
+- Permission codes, not role names, control operations. Assigned-class scoping additionally applies to teachers and other scoped staff.
+
+Storage is S3-compatible: MinIO is used locally and Cloudflare R2 or AWS S3 in production. PostgreSQL stores only workflow and object metadata; object storage holds the video. Spring Boot creates short-lived signed upload/read URLs.
+
+Configuration keys are `storage.provider`, `storage.endpoint`, `storage.region`, `storage.bucket`, `storage.access-key`, `storage.secret-key`, `storage.public-base-url`, `storage.presigned-upload-expiry-minutes`, `storage.presigned-read-expiry-minutes`, `media.video.max-file-size-mb`, `media.video.allowed-mime-types`, `media.upload-session-expiry-minutes`, `media.share-link-expiry-days`, `media.upload-page-base-url`, and `media.public-share-base-url`. Credentials must come from environment variables or a secret manager.
+
+Manual Zalo delivery is explicitly human-operated in this phase. The backend prepares an approved message and share link; Office Staff uses **Copy message** and **Open Zalo**, sends it manually, and marks it `SENT_MANUALLY`. The system records the delivery and audit log; it does not call a Zalo sending API.
+
+The canonical persistence model for this workflow is `video_upload_sessions`, `media_videos`, `video_share_links`, and `notification_deliveries`. The earlier generic `media_items`/`media_deliveries` model may remain for non-video legacy data but must not be used for new QR video uploads. `MONTHLY_PERSONAL_VIDEO` requires a student and first-of-month `target_month`; class and foreign-teacher activity types require a class. All tables use the common audit, soft-delete, and optimistic-lock columns.
+
 Recommended decision:
 
 ```text

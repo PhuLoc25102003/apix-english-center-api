@@ -38,6 +38,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh-token").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/media/videos/upload-sessions/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/media/videos/upload-sessions/*/presign").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/media/videos/upload-sessions/*/complete").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/media/videos/*").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

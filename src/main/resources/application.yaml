@@ -32,3 +32,27 @@ security:
     access-token-expiration-minutes: 60
     refresh-token-expiration-days: 30
     cookie-secure: ${COOKIE_SECURE:false}
+
+storage:
+  provider: ${STORAGE_PROVIDER:MINIO}
+  endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
+  region: ${STORAGE_REGION:us-east-1}
+  bucket: ${STORAGE_BUCKET:apix-media}
+  access-key: ${STORAGE_ACCESS_KEY:}
+  secret-key: ${STORAGE_SECRET_KEY:}
+  public-base-url: ${STORAGE_PUBLIC_BASE_URL:}
+  presigned-upload-expiry-minutes: ${STORAGE_PRESIGNED_UPLOAD_EXPIRY_MINUTES:10}
+  presigned-read-expiry-minutes: ${STORAGE_PRESIGNED_READ_EXPIRY_MINUTES:10}
+
+media:
+  upload-session-expiry-minutes: ${MEDIA_UPLOAD_SESSION_EXPIRY_MINUTES:20}
+  share-link-expiry-days: ${MEDIA_SHARE_LINK_EXPIRY_DAYS:30}
+  upload-page-base-url: ${MEDIA_UPLOAD_PAGE_BASE_URL:http://localhost:5173/media/upload}
+  public-share-base-url: ${MEDIA_PUBLIC_SHARE_BASE_URL:http://localhost:5173/media/videos/share}
+  video:
+    max-file-size-mb: ${MEDIA_VIDEO_MAX_FILE_SIZE_MB:500}
+    allowed-mime-types:
+      - video/mp4
+      - video/quicktime
+      - video/webm
+      - video/x-matroska

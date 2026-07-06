@@ -22,9 +22,15 @@ public class AuditService {
     public void record(String action, String module, String entityType, UUID entityId,
                        Map<String,Object> before, Map<String,Object> after) {
         UUID userId = currentActor.userId();
+        recordAs(userId, employeeRepository.findByUserIdAndDeletedAtIsNull(userId).map(e -> e.getId()).orElse(null),
+                action, module, entityType, entityId, before, after);
+    }
+
+    public void recordAs(UUID actorUserId, UUID actorEmployeeId, String action, String module,
+                         String entityType, UUID entityId, Map<String,Object> before, Map<String,Object> after) {
         HttpServletRequest request = requestProvider.getIfAvailable();
-        repository.save(AuditLog.builder().actorUserId(userId)
-                .actorEmployeeId(employeeRepository.findByUserIdAndDeletedAtIsNull(userId).map(e -> e.getId()).orElse(null))
+        repository.save(AuditLog.builder().actorUserId(actorUserId)
+                .actorEmployeeId(actorEmployeeId)
                 .action(action).module(module).entityType(entityType).entityId(entityId)
                 .beforeData(before).afterData(after)
                 .ipAddress(request == null ? null : request.getRemoteAddr())
