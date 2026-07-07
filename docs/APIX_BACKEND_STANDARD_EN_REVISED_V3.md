@@ -332,6 +332,7 @@ Use these permission codes as the backend/frontend contract.
 | Leave | `leave:request`, `leave:read`, `leave:approve`, `leave:cancel`, `leave:cancel-approve` |
 | Notification | `notification:read`, `notification:create`, `notification:send`, `notification-template:manage` |
 | Contact Log | `contactlog:read`, `contactlog:create` |
+| Video Delivery | `video-delivery:read`, `video-delivery:create-batch`, `video-delivery:update-batch`, `video-delivery:cancel-batch`, `video-delivery:prepare-message`, `video-delivery:mark-copied`, `video-delivery:open-zalo`, `video-delivery:mark-sent`, `video-delivery:mark-failed`, `video-delivery:mark-skipped`, `video-delivery:reopen`, `video-delivery:assign` |
 | Media | `media:read`, `media:upload`, `media:publish`, `media:deliver` |
 | Audit | `audit:read`, `audit:export` |
 | Settings | `settings:read`, `settings:update` |
@@ -1100,9 +1101,27 @@ Stores calculation details for audit and explanation.
 
 Video can be integrated into the system, but the application must not store heavy files in PostgreSQL or on the app server.
 
-### 13.0 QR direct-to-storage video workflow
+### 13.0 Video Delivery Tracking (MVP default)
 
-The standard video workflow is desktop-orchestrated and mobile-uploaded. Office Staff or a Teacher selects the class, student, optional class session, video type, and month on desktop. The backend creates a short-lived `video_upload_sessions` record and returns a mobile upload URL as the QR payload. A phone opens that token-protected page, reads only the minimal immutable target details, requests a short-lived presigned `PUT`, and uploads directly to object storage. The phone then calls the completion API. The backend verifies the exact object key and stored object metadata, creates `media_videos` metadata, and completes the upload session. The desktop polls/refetches the video list, reviews the item, approves or rejects it, creates a revocable parent share link, prepares a Manual Zalo message, and records the manual delivery status. Every state-changing step is audited.
+The default video feature is **Video Delivery Tracking**, not media file storage. Teachers record videos on mobile phones and send them to the center's internal Zalo group as they do today. Office Staff uses the desktop system to see which students require a monthly, final-course, foreign-teacher, class-activity, or custom video; opens the parent's Zalo conversation; forwards the actual video directly; returns to the web; and marks the delivery as sent. The system records responsibility, recipient, student, class, period, status, timestamps, prepared message, failure/skip reason, and detailed action history.
+
+Web is the source of operational tracking, responsibility, deadline, and log. Zalo is the fastest channel for sending the actual video to parents.
+
+Zalo is manual in this phase. The backend does not call a Zalo OA/API and does not automatically send messages or videos. It only prepares direct-forwarding message content, produces the parent Zalo URL from the normalized phone number, and logs user-confirmed actions. The default message contains no video link; it tells the parent that the video is attached in the same Zalo conversation.
+
+The canonical MVP model is:
+
+- video_delivery_batches: a class/group campaign with type, month, due date, status, and aggregate progress;
+- student_video_deliveries: one accountable student/parent delivery item;
+- video_delivery_attempts: append-only preparation, copy, open, sent, failed, skipped, and reopened history.
+
+Batch states are DRAFT, ACTIVE, COMPLETED, and CANCELLED. Delivery states are PENDING, PREPARED, OPENED_ZALO, SENT_MANUALLY, FAILED, SKIPPED, and CANCELLED. Channels are MANUAL_ZALO_DIRECT (default), MANUAL_ZALO_LINK, and OTHER.
+
+Video upload, QR upload, temporary playback links, and object storage are optional future enhancements only. They are not required by the MVP, must not block or appear in the default frontend delivery path, and must never force Office Staff to upload a video before recording a direct Zalo delivery. Existing optional upload tables may remain for forward compatibility and must not be deleted blindly. Video binary data is never stored in PostgreSQL.
+
+### 13.0A Optional QR direct-to-storage enhancement
+
+If enabled later, the QR workflow is desktop-orchestrated and mobile-uploaded. Office Staff or a Teacher selects the immutable target, and the phone uploads directly to object storage through a short-lived token and presigned URL. This optional path must remain independent from the default direct-forwarding workflow.
 
 The desktop selection is immutable from the mobile page. Staff must never have to transfer a phone video to a computer, video bytes must never be stored in PostgreSQL, and large video bytes must not pass through Spring Boot when presigned object-storage upload is available.
 
@@ -1133,20 +1152,18 @@ Configuration keys are `storage.provider`, `storage.endpoint`, `storage.region`,
 
 Manual Zalo delivery is explicitly human-operated in this phase. The backend prepares an approved message and share link; Office Staff uses **Copy message** and **Open Zalo**, sends it manually, and marks it `SENT_MANUALLY`. The system records the delivery and audit log; it does not call a Zalo sending API.
 
-The canonical persistence model for this workflow is `video_upload_sessions`, `media_videos`, `video_share_links`, and `notification_deliveries`. The earlier generic `media_items`/`media_deliveries` model may remain for non-video legacy data but must not be used for new QR video uploads. `MONTHLY_PERSONAL_VIDEO` requires a student and first-of-month `target_month`; class and foreign-teacher activity types require a class. All tables use the common audit, soft-delete, and optimistic-lock columns.
+The optional persistence model is video_upload_sessions, media_videos, video_share_links, and notification_deliveries. The earlier generic media_items/media_deliveries model may remain for legacy data. None of these storage-oriented tables is a prerequisite for Video Delivery Tracking.
 
-Recommended decision:
+MVP decision:
 
 ```text
-Store video files in Cloudflare R2, AWS S3, or MinIO.
-Store only metadata, ownership, delivery status, and access links in PostgreSQL.
+Send the actual video directly through the existing internal/parent Zalo workflow.
+Store delivery responsibility, status, deadline, recipient, and attempt history in PostgreSQL.
 ```
 
-This is better than sending videos directly through a staff member's Zalo because it keeps history, ownership, delivery status, and parent/student access in one system.
+If temporary links are enabled later, store video files in R2, S3, or MinIO and keep only metadata in PostgreSQL. This optional enhancement does not replace or gate direct Zalo forwarding.
 
-Zalo can be used later as a notification channel that links to the web media item instead of sending heavy files directly.
-
-### 13.1 `media_items`
+### 13.1 Optional legacy/future `media_items`
 
 | Column | Type | Rule |
 |---|---|---|
@@ -1169,7 +1186,7 @@ Rules:
 - `FOREIGN_TEACHER_ACTIVITY` can be class-level.
 - `FINAL_COURSE` can be class-level or student-level.
 
-### 13.2 `media_deliveries`
+### 13.2 Optional legacy/future `media_deliveries`
 
 | Column | Type | Rule |
 |---|---|---|
@@ -1435,7 +1452,26 @@ POST   /api/v1/payroll-items/{id}/approve
 POST   /api/v1/payroll-items/{id}/mark-paid
 ```
 
-### 16.7 Media APIs
+### 16.7 Video Delivery Tracking APIs
+
+```text
+GET    /api/v1/video-delivery-batches
+POST   /api/v1/video-delivery-batches
+PUT    /api/v1/video-delivery-batches/{id}
+PATCH  /api/v1/video-delivery-batches/{id}/cancel
+GET    /api/v1/video-deliveries
+GET    /api/v1/video-deliveries/stats
+GET    /api/v1/video-deliveries/{id}
+POST   /api/v1/video-deliveries/{id}/prepare-message
+PATCH  /api/v1/video-deliveries/{id}/copied
+PATCH  /api/v1/video-deliveries/{id}/opened-zalo
+PATCH  /api/v1/video-deliveries/{id}/sent
+PATCH  /api/v1/video-deliveries/{id}/failed
+PATCH  /api/v1/video-deliveries/{id}/skipped
+PATCH  /api/v1/video-deliveries/{id}/reopen
+```
+
+### 16.7A Optional media storage APIs
 
 ```text
 GET    /api/v1/media-items?classId=&studentId=&category=&status=

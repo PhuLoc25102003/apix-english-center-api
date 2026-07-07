@@ -34,6 +34,8 @@ public interface ClassEnrollmentRepository extends JpaRepository<ClassEnrollment
 
     List<ClassEnrollment> findByClazzIdAndDeletedAtIsNull(UUID classId);
 
+    List<ClassEnrollment> findByClazzIdAndStatusAndDeletedAtIsNull(UUID classId, String status);
+
     @Query("SELECT MAX(e.enrollmentCode) FROM ClassEnrollment e WHERE e.enrollmentCode LIKE 'ENR%'")
     String findMaxEnrollmentCode();
 }
