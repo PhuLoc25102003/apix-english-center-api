@@ -6,6 +6,7 @@ import com.apixenglish.center.common.response.PageResponse;
 import com.apixenglish.center.modules.student.dto.request.CreateStudentRequest;
 import com.apixenglish.center.modules.student.dto.request.UpdateStudentRequest;
 import com.apixenglish.center.modules.student.dto.response.StudentResponse;
+import com.apixenglish.center.modules.student.dto.response.StudentLookupResponse;
 import com.apixenglish.center.modules.student.entity.Student;
 import com.apixenglish.center.modules.student.entity.StudentType;
 import com.apixenglish.center.modules.student.entity.StudentAccessMode;
@@ -73,18 +74,12 @@ public class StudentServiceImpl implements StudentService {
     @Override
     @Transactional
     public StudentResponse createStudent(CreateStudentRequest request) {
-        validateDuplicateStudent(null, request.getFullName(), request.getDateOfBirth(), request.getUserId());
-
-        User user = null;
-        if (request.getUserId() != null) {
-            user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        }
+        validateDuplicateStudent(null, request.getFullName(), request.getDateOfBirth(), null);
 
         String studentCode = generateNextStudentCode();
 
         Student student = Student.builder()
-                .user(user)
+                .user(null)
                 .studentCode(studentCode)
                 .fullName(request.getFullName())
                 .dateOfBirth(request.getDateOfBirth())
@@ -95,7 +90,7 @@ public class StudentServiceImpl implements StudentService {
                 .medicalNotes(request.getMedicalNotes())
                 .learningNotes(request.getLearningNotes())
                 .studentType(request.getStudentType())
-                .accessMode(request.getAccessMode())
+                .accessMode(StudentAccessMode.NO_ACCOUNT)
                 .status(StudentStatus.ACTIVE)
                 .build();
 
@@ -110,14 +105,8 @@ public class StudentServiceImpl implements StudentService {
                 .filter(s -> s.getDeletedAt() == null)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
 
-        UUID targetUserId = request.getUserId() != null ? request.getUserId() : (student.getUser() != null ? student.getUser().getId() : null);
-        validateDuplicateStudent(id, request.getFullName(), request.getDateOfBirth(), targetUserId);
-
-        if (request.getUserId() != null) {
-            User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            student.setUser(user);
-        }
+        validateDuplicateStudent(id, request.getFullName(), request.getDateOfBirth(), null);
+        student.setUser(null);
 
         student.setFullName(request.getFullName());
         student.setDateOfBirth(request.getDateOfBirth());
@@ -128,7 +117,7 @@ public class StudentServiceImpl implements StudentService {
         student.setMedicalNotes(request.getMedicalNotes());
         student.setLearningNotes(request.getLearningNotes());
         student.setStudentType(request.getStudentType());
-        student.setAccessMode(request.getAccessMode());
+        student.setAccessMode(StudentAccessMode.NO_ACCOUNT);
         student.setStatus(request.getStatus());
 
         Student updatedStudent = studentRepository.save(student);
@@ -185,5 +174,18 @@ public class StudentServiceImpl implements StudentService {
         } catch (Exception e) {
             return "STU" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentLookupResponse> lookupStudents() {
+        return studentRepository.findByDeletedAtIsNull().stream()
+                .map(s -> StudentLookupResponse.builder()
+                        .id(s.getId())
+                        .studentCode(s.getStudentCode())
+                        .fullName(s.getFullName())
+                        .displayName(s.getFullName() + " (" + s.getStudentCode() + ")")
+                        .build())
+                .collect(java.util.stream.Collectors.toList());
     }
 }

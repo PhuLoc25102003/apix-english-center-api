@@ -45,4 +45,5 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     String findMaxStudentCode();
 
     List<Student> findByFullNameAndDateOfBirthAndDeletedAtIsNull(String fullName, LocalDate dateOfBirth);
+    List<Student> findByDeletedAtIsNull();
 }

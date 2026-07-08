@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +18,8 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
     Optional<Course> findByCodeAndDeletedAtIsNull(String code);
 
     boolean existsByCodeAndDeletedAtIsNull(String code);
+    @Query("SELECT c FROM Course c LEFT JOIN FETCH c.level WHERE c.deletedAt IS NULL ORDER BY c.name")
+    List<Course> findForLookup();
 
     @Query("SELECT c FROM Course c " +
            "WHERE c.deletedAt IS NULL " +

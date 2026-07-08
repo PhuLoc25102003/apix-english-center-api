@@ -12,7 +12,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ParentResponse {
     private UUID id;
-    private UUID userId;
     private String parentCode;
     private String fullName;
     private String phone;

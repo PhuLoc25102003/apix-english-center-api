@@ -2,6 +2,8 @@ package com.apixenglish.center.modules.course.controller;
 
 import com.apixenglish.center.common.response.ApiResponse;
 import com.apixenglish.center.common.response.PageResponse;
+import com.apixenglish.center.common.response.LookupResponse;
+import com.apixenglish.center.modules.course.repository.LevelRepository;
 import com.apixenglish.center.modules.course.dto.request.CreateLevelRequest;
 import com.apixenglish.center.modules.course.dto.request.UpdateLevelRequest;
 import com.apixenglish.center.modules.course.dto.response.LevelResponse;
@@ -30,6 +32,16 @@ import java.util.UUID;
 public class LevelController {
 
     private final LevelService levelService;
+    private final LevelRepository levelRepository;
+
+    @GetMapping("/lookup")
+    public ResponseEntity<ApiResponse<List<LookupResponse>>> lookupLevels() {
+        List<LookupResponse> levels = levelRepository.findByDeletedAtIsNullAndIsActiveTrueOrderByOrderIndexAsc().stream()
+                .map(level -> LookupResponse.builder().id(level.getId()).code(level.getCode()).name(level.getName())
+                        .displayName(level.getCode() + " - " + level.getName()).build())
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(levels, "Levels lookup retrieved successfully"));
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<LevelResponse>>> getLevels(

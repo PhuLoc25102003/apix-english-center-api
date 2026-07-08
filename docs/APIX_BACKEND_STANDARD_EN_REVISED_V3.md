@@ -289,24 +289,13 @@ Can:
 - Assist attendance if granted.
 - Add internal notes if granted.
 
-### 2.8 Parent
+### 2.8 Parent [DEPRECATED LOGIN ROLE]
 
-Can:
+Parents no longer log in to the web. Their profiles are managed internally. Communication is done manually or via Zalo.
 
-- View own children only.
-- View weekly updates, scores, attendance summaries, tuition invoices, learning reports, timetable, media delivered to their children.
-- Receive notifications.
+### 2.9 Student [DEPRECATED LOGIN ROLE]
 
-### 2.9 Student
-
-Only students with `access_mode = OWN_ACCOUNT` can log in.
-
-Can:
-
-- View own class timetable.
-- View own weekly updates, scores, reports, and media.
-
-Young students with `NO_ACCOUNT` or `PARENT_MANAGED` must not have student portal access.
+Students no longer log in to the web. Their profiles are managed internally by staff/teachers.
 
 ---
 
@@ -316,14 +305,14 @@ Use these permission codes as the backend/frontend contract.
 
 | Module | Permission examples |
 |---|---|
-| Dashboard | `dashboard:owner-read`, `dashboard:office-read`, `dashboard:teacher-read`, `dashboard:parent-read`, `dashboard:student-read`, `dashboard:employee-read` |
+| Dashboard | `dashboard:owner-read`, `dashboard:office-read`, `dashboard:teacher-read`, `dashboard:employee-read` |
 | Users/RBAC | `user:read`, `user:create`, `user:update`, `role:read`, `role:manage`, `permission:read`, `permission:assign` |
 | Employee | `employee:read`, `employee:create`, `employee:update`, `employee:delete`, `employee:salary-read` |
 | Student | `student:read`, `student:create`, `student:update`, `student:delete`, `student:academic-note-create` |
 | Parent | `parent:read`, `parent:create`, `parent:update`, `parent:delete`, `parent:contact-read` |
-| Class | `class:read`, `class:create`, `class:update`, `class:assign-staff`, `class:read-assigned` |
-| Schedule | `schedule:read`, `schedule:create`, `schedule:update`, `schedule:generate-session`, `schedule:resolve-conflict` |
-| Attendance | `attendance:read`, `attendance:mark`, `attendance:mark-office`, `attendance:submit`, `attendance:review`, `attendance:override` |
+| Class | `class:read`, `class:create`, `class:update`, `class:read-assigned`, `class-staff:read`, `class-staff:assign`, `class-staff:update`, `class-staff:remove`, `class-student:read`, `class-student:assign`, `class-student:remove` |
+| Schedule | `class-schedule:read`, `class-schedule:create`, `class-schedule:update`, `class-schedule:delete`, `class-schedule:generate` |
+| Attendance | `attendance:read`, `attendance:mark`, `attendance:mark-all`, `attendance:complete`, `attendance:monitor`, `attendance:office-override` |
 | Weekly Update | `weekly-update:read`, `weekly-update:create`, `weekly-update:submit`, `weekly-update:approve`, `weekly-update:publish`, `weekly-update:reject` |
 | Score | `score:read`, `score:create`, `score:update`, `score:publish`, `score:notify` |
 | Learning Report | `learning-report:read`, `learning-report:create`, `learning-report:submit`, `learning-report:approve`, `learning-report:publish`, `learning-report:remind` |
@@ -354,8 +343,7 @@ Keep these foundation modules from the existing standard, with normal audit/comm
 Important student/account rules:
 
 ```text
-A student profile can exist without a login account.
-A parent profile can exist without a login account.
+Student profiles and parent profiles are internal records and do not have login accounts or portal roles.
 A teacher must normally have an employee profile and login account.
 Teachers can view student academic information but must not see parent private contact information by default.
 ```
@@ -728,7 +716,7 @@ UNIQUE (score_item_id, student_id)
 Rules:
 
 - `score_value` must be between 0 and `max_score` when `max_score` is set.
-- Parent and student can see only published scores.
+- Office staff and assigned teachers can see scores; parent delivery is an office-managed manual/Zalo workflow, not portal access.
 - Teacher can edit draft scores for assigned classes.
 - Locked scores require `score:update-locked` if this permission is added later.
 
@@ -1488,8 +1476,6 @@ POST   /api/v1/media-items/{id}/deliver
 GET /api/v1/dashboard/owner?range=month&from=&to=
 GET /api/v1/dashboard/office?date=
 GET /api/v1/dashboard/teacher?date=
-GET /api/v1/dashboard/parent?childId=&range=month
-GET /api/v1/dashboard/student?range=month
 GET /api/v1/dashboard/employee?period=
 ```
 

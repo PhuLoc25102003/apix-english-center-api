@@ -14,7 +14,6 @@ public class ParentMapper {
 
         return ParentResponse.builder()
                 .id(parent.getId())
-                .userId(parent.getUser() != null ? parent.getUser().getId() : null)
                 .parentCode(parent.getParentCode())
                 .fullName(parent.getFullName())
                 .phone(parent.getPhone())

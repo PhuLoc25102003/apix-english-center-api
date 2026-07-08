@@ -1,6 +1,5 @@
 package com.apixenglish.center.modules.student.dto.request;
 
-import com.apixenglish.center.modules.student.entity.StudentAccessMode;
 import com.apixenglish.center.modules.student.entity.StudentStatus;
 import com.apixenglish.center.modules.student.entity.StudentType;
 import jakarta.validation.constraints.NotBlank;
@@ -11,15 +10,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateStudentRequest {
-
-    private UUID userId;
 
     @NotBlank(message = "Full name must not be blank")
     private String fullName;
@@ -36,9 +32,6 @@ public class UpdateStudentRequest {
 
     @NotNull(message = "Student type must not be null")
     private StudentType studentType;
-
-    @NotNull(message = "Access mode must not be null")
-    private StudentAccessMode accessMode;
 
     @NotNull(message = "Status must not be null")
     private StudentStatus status;

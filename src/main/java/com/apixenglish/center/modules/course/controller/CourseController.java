@@ -2,6 +2,8 @@ package com.apixenglish.center.modules.course.controller;
 
 import com.apixenglish.center.common.response.ApiResponse;
 import com.apixenglish.center.common.response.PageResponse;
+import com.apixenglish.center.common.response.LookupResponse;
+import com.apixenglish.center.modules.course.repository.CourseRepository;
 import com.apixenglish.center.modules.course.dto.request.CreateCourseRequest;
 import com.apixenglish.center.modules.course.dto.request.UpdateCourseRequest;
 import com.apixenglish.center.modules.course.dto.response.CourseResponse;
@@ -30,6 +32,18 @@ import java.util.UUID;
 public class CourseController {
 
     private final CourseService courseService;
+    private final CourseRepository courseRepository;
+
+    @GetMapping("/lookup")
+    public ResponseEntity<ApiResponse<List<LookupResponse>>> lookupCourses() {
+        List<LookupResponse> courses = courseRepository.findForLookup().stream()
+                .map(course -> LookupResponse.builder().id(course.getId()).code(course.getCode()).name(course.getName())
+                        .displayName(course.getCode() + " - " + course.getName())
+                        .parentId(course.getLevel() == null ? null : course.getLevel().getId())
+                        .parentName(course.getLevel() == null ? null : course.getLevel().getName()).build())
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(courses, "Courses lookup retrieved successfully"));
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CourseResponse>>> getCourses(

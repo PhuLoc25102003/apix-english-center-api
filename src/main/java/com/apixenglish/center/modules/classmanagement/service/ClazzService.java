@@ -8,8 +8,12 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
 
+import com.apixenglish.center.modules.classmanagement.dto.response.ClassLookupResponse;
+import java.util.List;
+
 public interface ClazzService {
-    PageResponse<ClassResponse> getClasses(String search, Pageable pageable);
+    PageResponse<ClassResponse> getClasses(String search, UUID teacherId, Pageable pageable);
+    List<ClassLookupResponse> lookupClasses();
     ClassResponse getClassById(UUID id);
     ClassResponse createClass(CreateClassRequest request);
     ClassResponse updateClass(UUID id, UpdateClassRequest request);

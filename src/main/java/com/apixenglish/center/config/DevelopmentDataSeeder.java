@@ -20,10 +20,10 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
 
     @Override @Transactional
     public void run(ApplicationArguments args) {
-        if (Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from users where email='admin@apix.local')", Boolean.class))) { seedSupplementalOperations(); seedVideoDeliveries(); return; }
+        if (Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from users where email='admin@apix.local')", Boolean.class))) { seedGeneratedSessions(); seedSupplementalOperations(); seedVideoDeliveries(); return; }
         String password = encoder.encode("password123");
-        seedUsers(password); seedRoleAssignments(); seedPositionsAndEmployees(); seedFamilies(password);
-        seedCampusAndAcademics(); seedClassesAndSchedules(); seedEnrollments(); seedOperations(); seedSupplementalOperations(); seedVideoDeliveries();
+        seedUsers(password); seedRoleAssignments(); seedPositionsAndEmployees(); seedFamilies();
+        seedCampusAndAcademics(); seedClassesAndSchedules(); seedEnrollments(); seedGeneratedSessions(); seedOperations(); seedSupplementalOperations(); seedVideoDeliveries();
     }
 
     private void seedUsers(String password) {
@@ -33,14 +33,11 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
         addUser("office2@apix.local","Le Quoc Bao","0900000004",password);
         for(int i=1;i<=4;i++) addUser("teacher"+i+"@apix.local",List.of("Pham Lan Anh","James Wilson","Nguyen Hoang Nam","Emily Carter").get(i-1),"090000001"+i,password);
         addUser("ta1@apix.local","Vo Ngoc Mai","0900000020",password);
-        for(int i=1;i<=15;i++) addUser("parent"+i+"@apix.local","Parent "+String.format("%02d",i),String.format("091100%04d",i),password);
-        for(int i=1;i<=4;i++) addUser("student"+i+"@apix.local","Student Account "+i,String.format("092200%04d",i),password);
     }
     private void addUser(String email,String name,String phone,String password){jdbc.update("insert into users(email,phone,password_hash,full_name,status,email_verified,phone_verified) values(?,?,?,?, 'ACTIVE',true,true)",email,phone,password,name);}
     private void seedRoleAssignments(){
         role("admin@apix.local","SUPER_ADMIN");role("manager@apix.local","CENTER_MANAGER");role("office1@apix.local","OFFICE_STAFF");role("office2@apix.local","OFFICE_STAFF");
         for(int i=1;i<=4;i++)role("teacher"+i+"@apix.local","TEACHER");role("ta1@apix.local","TEACHING_ASSISTANT");
-        for(int i=1;i<=15;i++)role("parent"+i+"@apix.local","PARENT");for(int i=1;i<=4;i++)role("student"+i+"@apix.local","STUDENT");
         jdbc.update("insert into role_permissions(role_id,permission_id) select r.id,p.id from roles r cross join permissions p where r.code in ('SUPER_ADMIN','CENTER_MANAGER') on conflict(role_id,permission_id) do nothing");
     }
     private void role(String email,String role){jdbc.update("insert into user_roles(user_id,role_id) select u.id,r.id from users u,roles r where u.email=? and r.code=? on conflict(user_id,role_id) do nothing",email,role);}
@@ -52,10 +49,10 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     }
     private void position(String code,String name,boolean teaching){jdbc.update("insert into positions(code,name,description,is_teaching_position,is_active) values(?,?,?, ?,true)",code,name,"Development "+name,teaching);}
     private void employee(String code,String email,String name,String position){jdbc.update("insert into employees(user_id,employee_code,full_name,employment_status,hired_date,note) select id,?,?, 'ACTIVE',date '2024-01-08','Development seed employee' from users where email=?",code,name,email);jdbc.update("insert into employee_positions(employee_id,position_id,is_primary,effective_from) select e.id,p.id,true,date '2024-01-08' from employees e,positions p where e.employee_code=? and p.code=?",code,position);}
-    private void seedFamilies(String password){
-        for(int i=1;i<=15;i++)jdbc.update("insert into parents(user_id,parent_code,full_name,phone,email,address,job_title) select id,?,?,?,?,?,? from users where email=?",String.format("PAR%04d",i),"Parent "+String.format("%02d",i),String.format("091100%04d",i),"parent"+i+"@apix.local","District "+((i%7)+1)+", Ho Chi Minh City",i%3==0?"Engineer":"Office worker","parent"+i+"@apix.local");
+    private void seedFamilies(){
+        for(int i=1;i<=15;i++)jdbc.update("insert into parents(parent_code,full_name,phone,email,address,job_title) values(?,?,?,?,?,?)",String.format("PAR%04d",i),"Parent "+String.format("%02d",i),String.format("091100%04d",i),"parent"+i+"@apix.local","District "+((i%7)+1)+", Ho Chi Minh City",i%3==0?"Engineer":"Office worker");
         String[] names={"Nguyen Gia Huy","Tran Bao Ngoc","Le Minh Khang","Pham Thao Vy","Vo Duc Anh","Bui Khanh Linh","Do Quang Minh","Hoang Yen Nhi","Dang Tuan Kiet","Ngo Mai Anh","Ly Hoang Long","Duong Ha My","Phan Anh Khoa","Trinh Ngoc Han","Cao Minh Tri","Vu Tuong Vi","Mai Gia Bao","Ta Phuong Anh","Chau Quoc Viet","Luong Thanh Truc"};
-        for(int i=1;i<=20;i++){String mode=i<=4?"OWN_ACCOUNT":i<=12?"PARENT_MANAGED":"NO_ACCOUNT";Object user=i<=4?id("select id from users where email=?","student"+i+"@apix.local"):null;jdbc.update("insert into students(user_id,student_code,full_name,date_of_birth,gender,school_name,grade,student_type,access_mode,status,learning_notes) values(?,?,?,?,?,?,?,?,?,'ACTIVE',?)",user,String.format("STU%04d",i),names[i-1],Date.valueOf(LocalDate.of(2010+i%6,(i%12)+1,(i%25)+1)),i%2==0?"FEMALE":"MALE","Ho Chi Minh City School "+((i%5)+1),String.valueOf(3+i%8),i<4?"CHILD":"TEENAGER",mode,"Seeded learner with realistic progress notes");
+        for(int i=1;i<=20;i++){jdbc.update("insert into students(student_code,full_name,date_of_birth,gender,school_name,grade,student_type,access_mode,status,learning_notes) values(?,?,?,?,?,?,?,'NO_ACCOUNT','ACTIVE',?)",String.format("STU%04d",i),names[i-1],Date.valueOf(LocalDate.of(2010+i%6,(i%12)+1,(i%25)+1)),i%2==0?"FEMALE":"MALE","Ho Chi Minh City School "+((i%5)+1),String.valueOf(3+i%8),i<4?"CHILD":"TEENAGER","Seeded learner with realistic progress notes");
             int parent=i<=5?1:((i-1)%15)+1;linkFamily(i,parent,i%3==0?"FATHER":i%3==1?"MOTHER":"GUARDIAN",true);if(i<=5)linkFamily(i,Math.min(parent+1,15),"MOTHER",false);}
     }
     private void linkFamily(int student,int parent,String relation,boolean primary){jdbc.update("insert into student_parents(student_id,parent_id,relationship,is_primary_contact,can_receive_notification,can_receive_tuition,can_pickup_student,is_emergency_contact) select s.id,p.id,?,?,true,true,?,? from students s,parents p where s.student_code=? and p.parent_code=?",relation,primary,primary,primary,String.format("STU%04d",student),String.format("PAR%04d",parent));}
@@ -72,6 +69,31 @@ public class DevelopmentDataSeeder implements ApplicationRunner {
     private void schedule(String clazz,int room,int day,String start,String end,String pattern){jdbc.update("insert into class_schedules(class_id,room_id,day_of_week,start_time,end_time,effective_from,effective_to,status,pattern_code) select c.id,r.id,?,?::time,?::time,c.start_date,c.expected_end_date,'ACTIVE',? from classes c join rooms r on r.code=? where c.class_code=?",day,start,end,pattern,String.format("R%02d",room),clazz);}
     private void seedEnrollments(){int code=1;for(int c=1;c<=6;c++)for(int j=0;j<4;j++)enrollment(code++,((c-1)*3+j)%20+1,c,"ACTIVE",source(code));String[] extra={"TRIAL","FROZEN","TRANSFERRED","COMPLETED","CANCELLED","TRIAL"};for(int i=0;i<6;i++)enrollment(code++,15+i,(i%2)+7,extra[i],source(code));}
     private void enrollment(int n,int student,int clazz,String status,String source){jdbc.update("insert into class_enrollments(class_id,student_id,enrollment_code,enrolled_date,start_date,end_date,status,source,note,cancellation_reason) select c.id,s.id,?,date '2026-01-05'+?::int,date '2026-01-05'+?::int,case when ? in ('COMPLETED','CANCELLED','TRANSFERRED') then date '2026-05-30' end,?,?,?,case when ?='CANCELLED' then 'Family schedule changed' end from classes c,students s where c.class_code=? and s.student_code=?",String.format("ENR%06d",n),n,n,status,status,source,"Realistic frontend test enrollment",status,String.format("CLS%03d",clazz),String.format("STU%04d",student));}
+    private void seedGeneratedSessions(){
+        jdbc.update("""
+            insert into class_sessions(class_id,room_id,schedule_id,session_date,start_time,end_time,lesson_no,status,note)
+            select cs.class_id,cs.room_id,cs.id,d::date,cs.start_time,cs.end_time,
+                   row_number() over(partition by cs.class_id order by d,cs.start_time)::int,'PLANNED','Generated from fixed schedule pattern'
+            from class_schedules cs
+            cross join lateral generate_series(greatest(cs.effective_from,current_date),least(coalesce(cs.effective_to,(current_date + interval '4 months')::date),(current_date + interval '4 months')::date),interval '1 day') d
+            where cs.deleted_at is null and cs.status='ACTIVE' and extract(isodow from d)=cs.day_of_week
+              and not exists(select 1 from class_sessions x where x.class_id=cs.class_id and x.session_date=d::date and x.start_time=cs.start_time and x.deleted_at is null)
+            """);
+        jdbc.update("""
+            insert into class_session_attendance_status(session_id,status,due_at)
+            select s.id,'NOT_STARTED',(s.session_date+s.start_time+interval '30 minutes') at time zone 'Asia/Ho_Chi_Minh'
+            from class_sessions s where s.deleted_at is null and s.session_date>=current_date
+              and not exists(select 1 from class_session_attendance_status a where a.session_id=s.id and a.deleted_at is null)
+            """);
+        jdbc.update("""
+            insert into student_attendance(session_id,student_id,status,source,locked_by_office)
+            select s.id,e.student_id,'NOT_MARKED','SYSTEM',false
+            from class_sessions s join class_enrollments e on e.class_id=s.class_id
+            where s.deleted_at is null and s.session_date>=current_date and e.deleted_at is null and e.status in ('TRIAL','ACTIVE','FROZEN')
+              and (e.start_date is null or e.start_date<=s.session_date) and (e.end_date is null or e.end_date>=s.session_date)
+            on conflict(session_id,student_id) do nothing
+            """);
+    }
     private void seedOperations(){
         jdbc.update("insert into allowance_types(code,name,allowance_category,calculation_type,default_amount,is_taxable,is_active,description) values('RESPONSIBILITY','Responsibility allowance','RESPONSIBILITY','FIXED_AMOUNT',500000,true,true,'Monthly responsibility allowance'),('CLASS_LOAD','Class allowance','CLASS','PER_CLASS',200000,true,true,'Allowance per class') on conflict(code) do nothing");
         jdbc.update("insert into payroll_periods(period_code,start_date,end_date,status) values('2026-06',date '2026-06-01',date '2026-06-30','OPEN') on conflict(period_code) do nothing");

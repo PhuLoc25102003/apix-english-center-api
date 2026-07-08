@@ -8,6 +8,7 @@ import com.apixenglish.center.modules.campus.repository.CampusRepository;
 import com.apixenglish.center.modules.classmanagement.dto.request.CreateClassRequest;
 import com.apixenglish.center.modules.classmanagement.dto.request.UpdateClassRequest;
 import com.apixenglish.center.modules.classmanagement.dto.response.ClassResponse;
+import com.apixenglish.center.modules.classmanagement.dto.response.ClassLookupResponse;
 import com.apixenglish.center.modules.classmanagement.entity.Clazz;
 import com.apixenglish.center.modules.classmanagement.mapper.ClazzMapper;
 import com.apixenglish.center.modules.classmanagement.repository.ClazzRepository;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -33,10 +35,23 @@ public class ClazzServiceImpl implements ClazzService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ClassResponse> getClasses(String search, Pageable pageable) {
-        Page<Clazz> clazzPage = clazzRepository.searchClasses(search, pageable);
+    public PageResponse<ClassResponse> getClasses(String search, UUID teacherId, Pageable pageable) {
+        Page<Clazz> clazzPage = clazzRepository.searchClasses(search, teacherId, pageable);
         Page<ClassResponse> responsePage = clazzPage.map(clazzMapper::toResponse);
         return PageResponse.of(responsePage);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ClassLookupResponse> lookupClasses() {
+        return clazzRepository.findByDeletedAtIsNull().stream()
+                .map(clazz -> ClassLookupResponse.builder()
+                        .id(clazz.getId())
+                        .classCode(clazz.getClassCode())
+                        .name(clazz.getName())
+                        .displayName(clazz.getClassCode() + " - " + clazz.getName())
+                        .build())
+                .toList();
     }
 
     @Override

@@ -8,8 +8,12 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
 
+import com.apixenglish.center.modules.student.dto.response.StudentLookupResponse;
+import java.util.List;
+
 public interface StudentService {
     PageResponse<StudentResponse> getStudents(String search, String studentType, String accessMode, String status, Pageable pageable);
+    List<StudentLookupResponse> lookupStudents();
     StudentResponse getStudentById(UUID id);
     StudentResponse createStudent(CreateStudentRequest request);
     StudentResponse updateStudent(UUID id, UpdateStudentRequest request);

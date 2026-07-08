@@ -20,6 +20,8 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
     boolean existsByCampusIdAndCodeAndDeletedAtIsNull(UUID campusId, String code);
 
     List<Room> findByCampusIdAndDeletedAtIsNull(UUID campusId);
+    @Query("SELECT r FROM Room r JOIN FETCH r.campus WHERE r.deletedAt IS NULL AND r.isActive = true ORDER BY r.name")
+    List<Room> findActiveForLookup();
 
     @Query("SELECT r FROM Room r " +
            "WHERE r.deletedAt IS NULL " +

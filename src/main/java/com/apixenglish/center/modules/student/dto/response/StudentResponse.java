@@ -1,6 +1,5 @@
 package com.apixenglish.center.modules.student.dto.response;
 
-import com.apixenglish.center.modules.student.entity.StudentAccessMode;
 import com.apixenglish.center.modules.student.entity.StudentStatus;
 import com.apixenglish.center.modules.student.entity.StudentType;
 import lombok.AllArgsConstructor;
@@ -17,7 +16,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class StudentResponse {
     private UUID id;
-    private UUID userId;
     private String studentCode;
     private String fullName;
     private LocalDate dateOfBirth;
@@ -28,6 +26,5 @@ public class StudentResponse {
     private String medicalNotes;
     private String learningNotes;
     private StudentType studentType;
-    private StudentAccessMode accessMode;
     private StudentStatus status;
 }

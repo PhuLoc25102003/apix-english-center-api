@@ -2,6 +2,8 @@ package com.apixenglish.center.modules.room.controller;
 
 import com.apixenglish.center.common.response.ApiResponse;
 import com.apixenglish.center.common.response.PageResponse;
+import com.apixenglish.center.common.response.LookupResponse;
+import com.apixenglish.center.modules.room.repository.RoomRepository;
 import com.apixenglish.center.modules.room.dto.request.CreateRoomRequest;
 import com.apixenglish.center.modules.room.dto.request.UpdateRoomRequest;
 import com.apixenglish.center.modules.room.dto.response.RoomResponse;
@@ -29,6 +31,17 @@ import java.util.UUID;
 public class RoomController {
 
     private final RoomService roomService;
+    private final RoomRepository roomRepository;
+
+    @GetMapping("/api/v1/rooms/lookup")
+    public ResponseEntity<ApiResponse<List<LookupResponse>>> lookupRooms() {
+        List<LookupResponse> rooms = roomRepository.findActiveForLookup().stream()
+                .map(room -> LookupResponse.builder().id(room.getId()).code(room.getCode()).name(room.getName())
+                        .displayName(room.getCode() + " - " + room.getName())
+                        .parentId(room.getCampus().getId()).parentName(room.getCampus().getName()).build())
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(rooms, "Rooms lookup retrieved successfully"));
+    }
 
     @GetMapping("/api/v1/rooms")
     public ResponseEntity<ApiResponse<List<RoomResponse>>> getRooms(

@@ -47,16 +47,10 @@ public class ParentServiceImpl implements ParentService {
     @Override
     @Transactional
     public ParentResponse createParent(CreateParentRequest request) {
-        User user = null;
-        if (request.getUserId() != null) {
-            user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        }
-
         String parentCode = generateNextParentCode();
 
         Parent parent = Parent.builder()
-                .user(user)
+                .user(null)
                 .parentCode(parentCode)
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
@@ -77,11 +71,7 @@ public class ParentServiceImpl implements ParentService {
                 .filter(p -> p.getDeletedAt() == null)
                 .orElseThrow(() -> new ResourceNotFoundException("Parent not found"));
 
-        if (request.getUserId() != null) {
-            User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            parent.setUser(user);
-        }
+        parent.setUser(null);
 
         parent.setFullName(request.getFullName());
         parent.setPhone(request.getPhone());

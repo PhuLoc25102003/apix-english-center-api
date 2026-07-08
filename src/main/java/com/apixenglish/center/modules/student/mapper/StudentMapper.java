@@ -14,7 +14,6 @@ public class StudentMapper {
 
         return StudentResponse.builder()
                 .id(student.getId())
-                .userId(student.getUser() != null ? student.getUser().getId() : null)
                 .studentCode(student.getStudentCode())
                 .fullName(student.getFullName())
                 .dateOfBirth(student.getDateOfBirth())
@@ -25,7 +24,6 @@ public class StudentMapper {
                 .medicalNotes(student.getMedicalNotes())
                 .learningNotes(student.getLearningNotes())
                 .studentType(student.getStudentType())
-                .accessMode(student.getAccessMode())
                 .status(student.getStatus())
                 .build();
     }
